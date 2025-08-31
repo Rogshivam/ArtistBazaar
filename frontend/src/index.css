@@ -107,6 +107,20 @@ All colors MUST be HSL.
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
+
+  /* Selected option */
+select option:checked {
+  background-color: #d35400; /* your orange primary */
+  color: white;
+}
+
+/* Hovered option */
+select option:hover {
+  background-color: #b54300; /* darker orange */
+  color: white;
+}
+
+
 }
 
 @layer base {
