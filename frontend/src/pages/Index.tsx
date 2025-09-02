@@ -8,6 +8,7 @@ import { Sparkles, MessageCircle, Users, ShoppingBag } from "lucide-react";
 import heroImage from "@/assets/hero-artisan.jpg";
 import  Footer  from "@/components/Footer";
 import Navbar from "@/components/Navbar";
+import { Link } from "react-router-dom";
 const featuredProducts = [
   {
     name: "Handmade Pottery Bowl",
@@ -133,6 +134,9 @@ const Index = () => {
                 onClick={() => handleProductClick(product)}
               />
             ))}
+          </div>
+          <div className="text-center mt-6">
+            <Link to="/products" className="text-blue-600 underline">Browse all products →</Link>
           </div>
         </div>
       </section>

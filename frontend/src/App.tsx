@@ -8,9 +8,14 @@ import NotFound from "./pages/NotFound";
 import SellerPage from "./pages/SellerPage";
 import AdminPanel from "./pages/AdminPanel";
 import Login from "@/components/Login";
-import ChangePassword from "./components/ChangePassword";
+// import ChangePassword from "./components/ChangePassword";
 import Signup from "./components/Signup";
 import AlertState from "./context/alert/AlertState";
+import CustomerDashboard from "./pages/CustomerDashboard";
+import FindSuppliers from "./pages/FindSuppliers";
+import Products from "./pages/Products";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import { CartProvider } from "./context/CartContext";
 // import LoadingState from "./context/loading/LoadingState"; // if you also use loading context
 
 const queryClient = new QueryClient();
@@ -18,23 +23,25 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AlertState>
-      {/* <LoadingState>  ✅ if you also need loading context */}
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/seller" element={<SellerPage />} />
-            <Route path="/admin" element={<AdminPanel />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/changePassword" element={<ChangePassword />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-      {/* </LoadingState> */}
+      <CartProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/products" element={<Products />} />
+              <Route path="/seller/:id" element={<ProtectedRoute roles={["Seller"]}><SellerPage /></ProtectedRoute>} />
+              <Route path="/Customer" element={<ProtectedRoute roles={["Customer"]}><CustomerDashboard /></ProtectedRoute>} />
+              <Route path="/Customer/suppliers" element={<ProtectedRoute roles={["Customer"]}><FindSuppliers /></ProtectedRoute>} />
+              <Route path="/admin" element={<ProtectedRoute roles={["Admin"]}><AdminPanel /></ProtectedRoute>} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </CartProvider>
     </AlertState>
   </QueryClientProvider>
 );
