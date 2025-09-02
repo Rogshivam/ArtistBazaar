@@ -1,31 +1,36 @@
-// import { createContext } from "react";
-
-// export interface Alert {
-//   msg: string;
-//   type: "success" | "error" | "info";
-// }
-
-// export interface AlertContextType {
-//   alert: Alert | null;
-//   showAlert: (message: string, type: Alert["type"]) => void;
-// }
-
-// const AlertContext = createContext<AlertContextType | undefined>(undefined);
-
-// export default AlertContext;
-import { createContext } from "react";
+import { createContext, useContext } from "react";
 
 export interface Alert {
+  id: string;
   msg: string;
-  type: "success" | "danger" | "info";
+  type: "success" | "danger" | "info" | "warning";
+  duration?: number;
+  action?: {
+    label: string;
+    onClick: () => void;
+  };
 }
 
 export interface AlertContextType {
-  alert: Alert | null;
-  showAlert: (msg: string, type: Alert["type"]) => void;
+  alerts: Alert[];
+  showAlert: (msg: string, type: Alert["type"], duration?: number, action?: Alert["action"]) => void;
+  showSuccess: (msg: string, duration?: number) => void;
+  showError: (msg: string, duration?: number) => void;
+  showInfo: (msg: string, duration?: number) => void;
+  showWarning: (msg: string, duration?: number) => void;
+  removeAlert: (id: string) => void;
+  clearAllAlerts: () => void;
 }
 
 const AlertContext = createContext<AlertContextType | undefined>(undefined);
+
+export const useAlert = () => {
+  const context = useContext(AlertContext);
+  if (!context) {
+    throw new Error('useAlert must be used within an AlertProvider');
+  }
+  return context;
+};
 
 export default AlertContext;
 

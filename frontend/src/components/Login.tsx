@@ -1,4 +1,4 @@
-import { useState, useContext, ChangeEvent } from "react";
+import { useState, ChangeEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Eye, EyeOff } from "lucide-react";
-import AlertContext from "../context/alert/AlertContext";
+import { useAlert } from "../context/alert/AlertContext";
 
 interface Credentials {
   email: string;
@@ -28,7 +28,7 @@ export default function Login() {
   const API_URL = import.meta.env.VITE_URL as string;
   const navigate = useNavigate();
 
-  const { showAlert } = useContext(AlertContext)!;
+  const { showSuccess, showError, showInfo } = useAlert();
 
   const { email, password, userType } = credentials;
 
@@ -52,21 +52,26 @@ export default function Login() {
         localStorage.setItem("refresh-token", json.refreshToken);
         localStorage.setItem("auth-role", userType);
         localStorage.setItem("user-data", JSON.stringify(json.user));
-        showAlert(json.message, "success");
+        showSuccess(`Welcome back, ${json.user?.name || 'User'}!`);
         setCredentials({ email: "", password: "", userType });
 
         // Navigate based on user role from backend response
         const userRole = json.user?.role || userType;
-        if (userRole === "Admin") navigate("/admin");
-        else if (userRole === "Seller") navigate(`/seller/${json.user?.id}`);
-        else if (userRole === "Services") navigate(`/services/${json.user?.id}`);
-        else navigate("/products"); // Customer
+        if (userRole === "Admin") {
+          navigate("/admin");
+        } else if (userRole === "Seller") {
+          navigate(`/seller/${json.user?.id}`);
+        } else if (userRole === "Services") {
+          navigate(`/services/${json.user?.id}`);
+        } else {
+          navigate("/products"); // Customer
+        }
       } else {
-        showAlert(json.message, "danger");
+        showError(json.message);
       }
     } catch (error: any) {
       setErrorMsg(error.message);
-      showAlert(error.message, "danger");
+      showError(error.message);
       console.error(error);
     } finally {
       setIsLoading(false);
@@ -97,13 +102,13 @@ export default function Login() {
         localStorage.setItem("refresh-token", json.refreshToken);
         localStorage.setItem("auth-role", "Customer");
         localStorage.setItem("user-data", JSON.stringify(json.user));
-        showAlert("Google login successful", "success");
+        showSuccess("Google login successful!");
         navigate("/products");
       } else {
-        showAlert(json.message, "danger");
+        showError(json.message);
       }
     } catch (error: any) {
-      showAlert("Google login failed", "danger");
+      showError("Google login failed");
       console.error(error);
     } finally {
       setIsLoading(false);
