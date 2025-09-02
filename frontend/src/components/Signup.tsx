@@ -1,4 +1,4 @@
-import { useState, useContext, ChangeEvent } from "react";
+import { useState, ChangeEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Eye, EyeOff } from "lucide-react";
-import alertContext from "../context/alert/AlertContext";
+import { useAlert } from "../context/alert/AlertContext";
 
 interface FormData {
   email: string;
@@ -17,10 +17,7 @@ interface FormData {
 }
 
 export default function Signup() {
-  const { showAlert } = useContext(alertContext) as {
-    showAlert: (msg: string, type: string) => void;
-  };
-
+  const { showSuccess, showError, showInfo } = useAlert();
   const navigate = useNavigate();
   const api_url = import.meta.env.VITE_URL as string;
 
@@ -42,22 +39,22 @@ export default function Signup() {
 
   const handleSignup = async () => {
     if (!formData.name.trim()) {
-      showAlert("Please enter your name", "danger");
+      showError("Please enter your name");
       return;
     }
 
     if (!formData.email.trim()) {
-      showAlert("Please enter your email", "danger");
+      showError("Please enter your email");
       return;
     }
 
     if (formData.password.length < 6) {
-      showAlert("Password must be at least 6 characters long", "danger");
+      showError("Password must be at least 6 characters long");
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      showAlert("Passwords do not match", "danger");
+      showError("Passwords do not match");
       return;
     }
 
@@ -84,7 +81,7 @@ export default function Signup() {
       const result = await response.json();
 
       if (response.ok) {
-        showAlert(result.message || "Account created successfully", "success");
+        showSuccess(result.message || "Account created successfully!");
         setFormData({
           email: "",
           name: "",
@@ -98,10 +95,10 @@ export default function Signup() {
           navigate("/login");
         }, 2000);
       } else {
-        showAlert(result.message || "Signup failed", "danger");
+        showError(result.message || "Signup failed");
       }
     } catch (error: any) {
-      showAlert(error.message || "Something went wrong", "danger");
+      showError(error.message || "Something went wrong");
     } finally {
       setIsLoading(false);
     }
@@ -131,13 +128,13 @@ export default function Signup() {
         localStorage.setItem("refresh-token", json.refreshToken);
         localStorage.setItem("auth-role", "Customer");
         localStorage.setItem("user-data", JSON.stringify(json.user));
-        showAlert("Google signup successful", "success");
+        showSuccess("Google signup successful!");
         navigate("/products");
       } else {
-        showAlert(json.message, "danger");
+        showError(json.message);
       }
     } catch (error: any) {
-      showAlert("Google signup failed", "danger");
+      showError("Google signup failed");
       console.error(error);
     } finally {
       setIsLoading(false);

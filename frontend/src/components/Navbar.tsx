@@ -1,213 +1,198 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { HashLink } from 'react-router-hash-link';
-import { Menu, X, ShoppingCart, LogOut } from 'lucide-react';
+import { Menu, X, ShoppingCart, LogOut, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Avatar from 'boring-avatars';
-import axios from 'axios';
 import logo from '../assets/logo-temp.png';
 import CartSidebar from '@/components/CartSidebar';
+import UserSidebar from '@/components/UserSidebar';
 import { useCart } from '@/context/CartContext';
+import { useWishlist } from '@/context/WishlistContext';
+import { useAlert } from '@/context/alert/AlertContext';
 
-// Types for type safety
+// Types
 interface User {
   name?: string;
-  avatarUrl?: string;
-  role?: string; // e.g., 'artisan', 'admin'
+  role?: string;
 }
-
 interface NavLink {
   name: string;
   path: string;
-  isHash?: boolean; // Whether the link uses hash navigation
+  isHash?: boolean;
 }
 
-// Navbar component
 const Navbar: React.FC = () => {
-  // State for mobile menu toggle
-  const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
-  // State for cart sidebar visibility
-  const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
-  // State for authenticated user
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isUserSidebarOpen, setIsUserSidebarOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
-  // Get cart context
-  const { cart, updateCartQuantity, removeFromCart, getCartItemCount } = useCart();
-  // Get current location for active link highlighting
+
+  const { getCartItemCount } = useCart();
+  const { getWishlistCount } = useWishlist();
+  const { showSuccess } = useAlert();
   const location = useLocation();
+  const navigate = useNavigate();
   const currentHash = location.hash || '#home';
 
-  // Fetch user data on mount
+  // Check auth
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        if (token) {
-          const response = await axios.get('/api/artisans/me', {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          setUser(response.data);
+    const checkAuth = () => {
+      const token = localStorage.getItem('auth-token');
+      const userData = localStorage.getItem('user-data');
+      if (token && userData) {
+        try {
+          const parsedUser = JSON.parse(userData);
+          setUser({ name: parsedUser.name || 'User', role: parsedUser.role || 'Customer' });
+        } catch {
+          setUser(null);
         }
-      } catch (err) {
-        console.error('Failed to fetch user:', err);
-        setUser(null);
-      }
+      } else setUser(null);
     };
-    fetchUser();
+    checkAuth();
+    window.addEventListener('storage', checkAuth);
+    return () => window.removeEventListener('storage', checkAuth);
   }, []);
 
-  // Handle logout
   const handleLogout = () => {
-    localStorage.removeItem('token');
+    localStorage.clear();
     setUser(null);
     setIsMenuOpen(false);
+    setIsUserSidebarOpen(false);
+    showSuccess('Logged out successfully');
+    navigate('/');
   };
 
-  // Navigation links for the artisan platform
   const navLinks: NavLink[] = [
     { name: 'Home', path: '#home', isHash: true },
     { name: 'Products', path: '/products' },
-    { name: 'Chat', path: '#chat', isHash: true }, // Added Chat button
     { name: 'About', path: '#about', isHash: true },
+    ...(user ? [{ name: 'Chat', path: '/chat' }] : []),
   ];
 
+  const renderNavLinks = (isMobile = false) =>
+    navLinks.map((link) =>
+      link.isHash ? (
+        <HashLink
+          key={link.path}
+          to={link.path}
+          smooth
+          onClick={() => isMobile && setIsMenuOpen(false)}
+          className={`block text-sm font-medium transition-colors ${
+            currentHash === link.path ? 'text-muted-green' : 'text-beige hover:text-muddy-brown'
+          }`}
+        >
+          {link.name}
+        </HashLink>
+      ) : (
+        <Link
+          key={link.path}
+          to={link.path}
+          onClick={() => isMobile && setIsMenuOpen(false)}
+          className={`block text-sm font-medium transition-colors ${
+            location.pathname === link.path ? 'text-muted-green' : 'text-beige hover:text-muddy-brown'
+          }`}
+        >
+          {link.name}
+        </Link>
+      )
+    );
+
   return (
-    <header className="sticky top-0 left-0 right-0 z-50 backdrop-blur-md shadow-lg bg-dark-mud">
+    <header className="sticky top-0 left-0 right-0 z-50 backdrop-blur-md shadow-lg bg-foreground/70">
       <nav className="max-w-screen-xl mx-auto px-4 py-3 flex items-center justify-between">
-        {/* Logo Section */}
+        {/* Logo */}
         <Link to="/" className="flex items-center text-beige font-bold text-lg">
           <img src={logo} alt="Artist Bazaar Logo" className="h-10 w-10 mr-2" />
           <span>Artist Bazaar</span>
         </Link>
 
-        {/* Desktop Navigation */}
-        <div className="hidden md:flex space-x-6">
-          {navLinks.map((link) =>
-            link.isHash ? (
-              // Hash links for in-page navigation
-              <HashLink
-                key={link.path}
-                to={link.path}
-                smooth
-                className={`text-sm font-medium transition-colors ${
-                  currentHash === link.path ? 'text-muted-green' : 'text-beige hover:text-muddy-brown'
-                }`}
-              >
-                {link.name}
-              </HashLink>
-            ) : (
-              // Regular links for page navigation
-              <Link
-                key={link.path}
-                to={link.path}
-                className={`text-sm font-medium transition-colors ${
-                  location.pathname === link.path ? 'text-muted-green' : 'text-beige hover:text-muddy-brown'
-                }`}
-              >
-                {link.name}
+        {/* Desktop Nav */}
+        <div className="hidden md:flex items-center space-x-6">
+          {renderNavLinks()}
+          {!user ? (
+            <>
+              {/* <Link to="/login" className="text-sm font-medium text-beige hover:text-muddy-brown">
+                Login
               </Link>
-            )
-          )}
-          {/* Logout Button (Desktop) */}
-          {user && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-beige hover:text-muddy-brown"
-              onClick={handleLogout}
-            >
-              <LogOut className="w-4 h-4 mr-1" />
-              Logout
+              <Link to="/signup" className="text-sm font-medium text-beige hover:text-muddy-brown">
+                Sign Up
+              </Link> */}
+            </>
+          ) : (
+            <Button variant="ghost" size="sm" className="text-beige hover:text-muddy-brown" onClick={handleLogout}>
+              <LogOut className="w-4 h-4 mr-1" /> Logout
             </Button>
           )}
         </div>
 
-        {/* Right Side: Cart and User */}
+        {/* Right Side */}
         <div className="flex items-center space-x-3">
-          {/* Cart Button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative text-beige hover:text-muddy-brown"
-            onClick={() => setIsCartOpen(true)}
-          >
-            <ShoppingCart className="h-5 w-5" />
-            {getCartItemCount() > 0 && (
-              <Badge
-                variant="destructive"
-                className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs bg-red-600"
+          {user && (
+            <>
+              {/* Wishlist */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative text-beige hover:text-muddy-brown"
+                onClick={() => navigate('/products')}
               >
-                {getCartItemCount()}
-              </Badge>
-            )}
-          </Button>
-
-          {/* Cart Sidebar */}
-          <CartSidebar
-            isOpen={isCartOpen}
-            onClose={() => setIsCartOpen(false)}
-            cart={cart}
-            onUpdateQuantity={updateCartQuantity}
-            onRemoveItem={removeFromCart}
-          />
-
-          {/* User Avatar */}
-          <Button variant="ghost" size="icon" className="rounded-full overflow-hidden">
-            <Avatar
-              size={32}
-              name={user?.name || 'Guest'}
-              variant="beam"
-              colors={['#5C4033', '#6B7280', '#F5F5DC', '#3F2F2A', '#8A9A5B']} // Muddy theme colors
-            />
-          </Button>
-
-          {/* Mobile Menu Toggle */}
-          <button
-            className="md:hidden text-beige hover:text-muddy-brown"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-          >
+                <Heart className="h-5 w-5" />
+                {getWishlistCount() > 0 && (
+                  <Badge className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs bg-red-600">
+                    {getWishlistCount()}
+                  </Badge>
+                )}
+              </Button>
+              {/* Cart */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative text-beige hover:text-muddy-brown"
+                onClick={() => setIsCartOpen(true)}
+              >
+                <ShoppingCart className="h-5 w-5" />
+                {getCartItemCount() > 0 && (
+                  <Badge className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs bg-red-600">
+                    {getCartItemCount()}
+                  </Badge>
+                )}
+              </Button>
+              {/* Avatar */}
+              <Button variant="ghost" size="icon" className="rounded-full overflow-hidden" onClick={() => setIsUserSidebarOpen(true)}>
+                <Avatar size={32} name={user.name || 'Guest'} variant="beam" colors={['#5C4033', '#6B7280', '#F5F5DC', '#3F2F2A', '#8A9A5B']} />
+              </Button>
+            </>
+          )}
+          {!user && (
+            <Button className="bg-primary text-white hover:bg-primary/90" onClick={() => navigate('/login')}>
+              Login
+            </Button>
+          )}
+          {/* Mobile Toggle */}
+          <button className="md:hidden text-beige hover:text-muddy-brown" onClick={() => setIsMenuOpen(!isMenuOpen)}>
             {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
       </nav>
 
-      {/* Mobile Navigation */}
+      {/* Mobile Nav */}
       {isMenuOpen && (
         <div className="md:hidden bg-dark-mud/90 px-4 pb-4 pt-2 space-y-2">
-          {navLinks.map((link) =>
-            link.isHash ? (
-              <HashLink
-                key={link.path}
-                to={link.path}
-                smooth
-                onClick={() => setIsMenuOpen(false)}
-                className={`block text-sm py-1 font-medium transition-colors ${
-                  currentHash === link.path ? 'text-muted-green' : 'text-beige hover:text-muddy-brown'
-                }`}
-              >
-                {link.name}
-              </HashLink>
-            ) : (
-              <Link
-                key={link.path}
-                to={link.path}
-                onClick={() => setIsMenuOpen(false)}
-                className={`block text-sm py-1 font-medium transition-colors ${
-                  location.pathname === link.path ? 'text-muted-green' : 'text-beige hover:text-muddy-brown'
-                }`}
-              >
-                {link.name}
+          {renderNavLinks(true)}
+          {!user ? (
+            <>
+              {/* <Link to="/login" onClick={() => setIsMenuOpen(false)} className="block text-sm py-1 font-medium text-beige hover:text-muddy-brown">
+                Login
               </Link>
-            )
-          )}
-          {/* Logout Button (Mobile) */}
-          {user && (
-            <button
-              className="block text-sm py-1 font-medium text-beige hover:text-muddy-brown"
-              onClick={handleLogout}
-            >
-              <LogOut className="w-4 h-4 inline mr-1" />
-              Logout
+              <Link to="/signup" onClick={() => setIsMenuOpen(false)} className="block text-sm py-1 font-medium text-beige hover:text-muddy-brown">
+                Sign Up
+              </Link> */}
+            </>
+          ) : (
+            <button onClick={handleLogout} className="block text-sm py-1 font-medium text-beige hover:text-muddy-brown">
+              <LogOut className="w-4 h-4 inline mr-1" /> Logout
             </button>
           )}
         </div>

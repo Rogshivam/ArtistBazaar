@@ -5,6 +5,8 @@ import { MapPin, Heart, ShoppingCart, Star } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/context/CartContext";
+import { useWishlist } from "@/context/WishlistContext";
+import { useAlert } from "@/context/alert/AlertContext";
 
 interface ProductCardProps {
   id?: string;
@@ -34,34 +36,59 @@ export function ProductCard({
   reviews = 23,
   onClick 
 }: ProductCardProps) {
-  const [isFavorite, setIsFavorite] = useState(false);
   const { toast } = useToast();
   const { addToCart } = useCart();
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+  const { showSuccess, showError, showInfo } = useAlert();
+  
+  const isFavorite = id ? isInWishlist(id) : false;
 
-  const handleFavoriteClick = (e: React.MouseEvent) => {
+  const handleFavoriteClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsFavorite(!isFavorite);
-    toast({
-      title: isFavorite ? "Removed from Wishlist" : "Added to Wishlist",
-      description: isFavorite ? "Product removed from your wishlist" : "Product saved to your wishlist",
-    });
+    if (!id) {
+      showError("Product ID not available");
+      return;
+    }
+
+    try {
+      if (isFavorite) {
+        await removeFromWishlist(id);
+        showSuccess(`${name} removed from wishlist`);
+      } else {
+        await addToWishlist(id, {
+          _id: id,
+          name,
+          price,
+          category: location
+        });
+        showSuccess(`${name} added to wishlist`);
+      }
+    } catch (error: any) {
+      showError(error.message || "Failed to update wishlist");
+    }
   };
 
   const handleQuickAdd = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!id) {
-      toast({ title: "Error", description: "Product ID not available", variant: "destructive" });
+      showError("Product ID not available");
       return;
     }
     
     try {
       await addToCart(id, 1);
-      toast({
-        title: "Added to Cart",
-        description: `${name} has been added to your cart`,
-      });
+      showSuccess(`${name} added to cart`);
+      
+      // Save to recent products
+      const recentProducts = JSON.parse(localStorage.getItem('recentProducts') || '[]');
+      const newRecent = [
+        { id, name, price, artisan, location },
+        ...recentProducts.filter((p: any) => p.id !== id)
+      ].slice(0, 10); // Keep only last 10
+      localStorage.setItem('recentProducts', JSON.stringify(newRecent));
+      
     } catch (err: any) {
-      toast({ title: "Error", description: err.message || "Failed to add to cart", variant: "destructive" });
+      showError(err.message || "Failed to add to cart");
     }
   };
 

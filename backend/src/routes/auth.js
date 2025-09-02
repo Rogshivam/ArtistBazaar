@@ -7,7 +7,7 @@ import { signToken, signRefreshToken } from "../utils/auth.js";
 const r = Router();
 
 const loginSchema = z.object({ email: z.string().email(), password: z.string().min(6) });
-const setPwdSchema = z.object({ email: z.string().email(), password: z.string().min(6) });
+const setPwdSchema = z.object({ email: z.string().email(), password: z.string().min(6), name: z.string().optional() });
 
 r.post(["/login", "/login"], async (req, res) => {
   try {
