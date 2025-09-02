@@ -42,18 +42,24 @@ r.post("/students/set-password", async (req, res) => {
   // Frontend maps "Student" -> Seller
   try {
     const { email, password, name } = setPwdSchema.parse(req.body);
+    
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: "Email already exists. Please use a different email or try logging in." });
+    }
+    
     const hash = await bcrypt.hash(password, 10);
-    const user = await User.findOneAndUpdate(
-      { email },
-      { 
-        $setOnInsert: { email, role: "Seller", passwordHash: hash, name: name || "Seller" }, 
-        $set: { passwordHash: hash, role: "Seller", name: name || "Seller" } 
-      },
-      { new: true, upsert: true }
-    );
-    return res.json({ message: "Seller account ready", userId: user._id });
+    const user = await User.create({
+      email,
+      role: "Seller",
+      passwordHash: hash,
+      name: name || "Seller",
+      isActive: true
+    });
+    return res.json({ message: "Seller account created successfully", userId: user._id });
   } catch (e) {
-    return res.status(400).json({ message: e.message || "Failed" });
+    return res.status(400).json({ message: e.message || "Failed to create account" });
   }
 });
 
@@ -61,18 +67,24 @@ r.post("/faculty/set-password", async (req, res) => {
   // Frontend maps "Faculty" -> Services
   try {
     const { email, password, name } = setPwdSchema.parse(req.body);
+    
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: "Email already exists. Please use a different email or try logging in." });
+    }
+    
     const hash = await bcrypt.hash(password, 10);
-    const user = await User.findOneAndUpdate(
-      { email },
-      { 
-        $setOnInsert: { email, role: "Services", passwordHash: hash, name: name || "Services" }, 
-        $set: { passwordHash: hash, role: "Services", name: name || "Services" } 
-      },
-      { new: true, upsert: true }
-    );
-    return res.json({ message: "Services account ready", userId: user._id });
+    const user = await User.create({
+      email,
+      role: "Services",
+      passwordHash: hash,
+      name: name || "Services",
+      isActive: true
+    });
+    return res.json({ message: "Services account created successfully", userId: user._id });
   } catch (e) {
-    return res.status(400).json({ message: e.message || "Failed" });
+    return res.status(400).json({ message: e.message || "Failed to create account" });
   }
 });
 
@@ -80,18 +92,24 @@ r.post("/customer/set-password", async (req, res) => {
   // Customer signup endpoint
   try {
     const { email, password, name } = setPwdSchema.parse(req.body);
+    
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: "Email already exists. Please use a different email or try logging in." });
+    }
+    
     const hash = await bcrypt.hash(password, 10);
-    const user = await User.findOneAndUpdate(
-      { email },
-      { 
-        $setOnInsert: { email, role: "Customer", passwordHash: hash, name: name || "Customer" }, 
-        $set: { passwordHash: hash, role: "Customer", name: name || "Customer" } 
-      },
-      { new: true, upsert: true }
-    );
-    return res.json({ message: "Customer account ready", userId: user._id });
+    const user = await User.create({
+      email,
+      role: "Customer",
+      passwordHash: hash,
+      name: name || "Customer",
+      isActive: true
+    });
+    return res.json({ message: "Customer account created successfully", userId: user._id });
   } catch (e) {
-    return res.status(400).json({ message: e.message || "Failed" });
+    return res.status(400).json({ message: e.message || "Failed to create account" });
   }
 });
 
