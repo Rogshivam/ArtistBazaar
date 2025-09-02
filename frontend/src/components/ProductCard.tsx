@@ -4,8 +4,10 @@ import { Badge } from "@/components/ui/badge";
 import { MapPin, Heart, ShoppingCart, Star } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useCart } from "@/context/CartContext";
 
 interface ProductCardProps {
+  id?: string;
   name: string;
   price: number;
   artisan: string;
@@ -20,6 +22,7 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ 
+  id,
   name, 
   price, 
   artisan, 
@@ -33,6 +36,7 @@ export function ProductCard({
 }: ProductCardProps) {
   const [isFavorite, setIsFavorite] = useState(false);
   const { toast } = useToast();
+  const { addToCart } = useCart();
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -43,12 +47,22 @@ export function ProductCard({
     });
   };
 
-  const handleQuickAdd = (e: React.MouseEvent) => {
+  const handleQuickAdd = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    toast({
-      title: "Added to Cart",
-      description: `${name} added to your cart`,
-    });
+    if (!id) {
+      toast({ title: "Error", description: "Product ID not available", variant: "destructive" });
+      return;
+    }
+    
+    try {
+      await addToCart(id, 1);
+      toast({
+        title: "Added to Cart",
+        description: `${name} has been added to your cart`,
+      });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message || "Failed to add to cart", variant: "destructive" });
+    }
   };
 
   return (

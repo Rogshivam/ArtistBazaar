@@ -1,137 +1,221 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from "react";
+import { DashboardLayout } from "@/components/DashboardLayout";
+import { MetricsCard } from "@/components/MetricsCard";
+import { AddProductDialog } from "@/components/AddProductDialog";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import {
+  DollarSign,
+  Package,
+  Users,
+  TrendingUp,
+  Plus,
+  Eye,
+  AlertCircle,
+  CheckCircle,
+  Clock
+} from "lucide-react";
 
-const SellerPage = () => {
+export default function SellerDashboard() {
+  const [addProductOpen, setAddProductOpen] = useState(false);
   const [products, setProducts] = useState([]);
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    price: '',
-    image: '',
-  });
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const API_URL = import.meta.env.VITE_URL;
+        const token = localStorage.getItem('auth-token') || '';
+        const res = await fetch(`${API_URL}/api/seller/products`, {
+          headers: { 'auth-token': token }
+        });
+        const json = await res.json();
+        if (res.ok) setProducts(json.items || []);
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    fetchProducts();
+  }, []);
+  
+  const recentSales = [
+    { id: "INV-001", product: "Industrial Valves", Customer: "BuildTech Corp", status: "paid", amount: "₹15,200" },
+    { id: "INV-002", product: "Automation Systems", Customer: "ManufacturingPro", status: "pending", amount: "₹28,500" },
+    { id: "INV-003", product: "Safety Equipment", Customer: "SafetyFirst Ltd", status: "shipped", amount: "₹5,800" },
+  ];
 
-  const addProduct = (e) => {
-    e.preventDefault();
-    if (!formData.name || !formData.description || !formData.price) {
-      alert('Please fill all required fields!');
-      return;
-    }
-    setProducts([...products, { ...formData, id: Date.now() }]);
-    setFormData({ name: '', description: '', price: '', image: '' });
-  };
-
-  const deleteProduct = (id) => {
-    setProducts(products.filter((product) => product.id !== id));
-  };
-
-  const editProduct = (id) => {
-    alert('Edit functionality: Implement with form population in a real app.');
-  };
+  const topProducts = [
+    { name: "Industrial Valves", sales: 45, revenue: "₹68,400", growth: 15 },
+    { name: "Automation Systems", sales: 32, revenue: "₹124,800", growth: 22 },
+    { name: "Safety Equipment", sales: 28, revenue: "₹31,200", growth: 8 },
+  ];
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">Seller Page: List Your Products</h1>
-
-      {/* Add Product Form */}
-      <div className="bg-white shadow-md rounded-lg p-6 mb-6">
-        <h2 className="text-xl font-semibold text-gray-700 mb-4">Add New Product</h2>
-        <form onSubmit={addProduct}>
-          <div className="mb-4">
-            <label htmlFor="name" className="block text-gray-600 mb-1">Product Name</label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleInputChange}
-              className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
+    <DashboardLayout>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Seller Dashboard</h1>
+            <p className="text-muted-foreground">Track your sales performance and manage your business.</p>
           </div>
-          <div className="mb-4">
-            <label htmlFor="description" className="block text-gray-600 mb-1">Description</label>
-            <textarea
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleInputChange}
-              className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              rows="4"
-              required
-            ></textarea>
-          </div>
-          <div className="mb-4">
-            <label htmlFor="price" className="block text-gray-600 mb-1">Price (₹)</label>
-            <input
-              type="number"
-              id="price"
-              name="price"
-              value={formData.price}
-              onChange={handleInputChange}
-              className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
-          <div className="mb-4">
-            <label htmlFor="image" className="block text-gray-600 mb-1">Image URL</label>
-            <input
-              type="url"
-              id="image"
-              name="image"
-              value={formData.image}
-              onChange={handleInputChange}
-              className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <button
-            type="submit"
-            className="bg-blue-900 text-black px-4 py-2 rounded hover:bg-blue-600"
+          <Button 
+            onClick={() => setAddProductOpen(true)}
+            className="bg-gradient-to-r from-primary to-primary-glow hover:from-primary-glow hover:to-primary"
           >
+            <Plus className="mr-2 h-4 w-4" />
             Add Product
-          </button>
-        </form>
-      </div>
-
-      {/* Products List */}
-      <div className="bg-white shadow-md rounded-lg p-6">
-        <h2 className="text-xl font-semibold text-gray-700 mb-4">Your Listed Products</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {products.map((product) => (
-            <div key={product.id} className="border p-4 rounded-lg">
-              <h3 className="text-lg font-semibold text-gray-800">{product.name}</h3>
-              <p className="text-gray-600">{product.description}</p>
-              <p className="text-gray-700 font-medium">Price: ₹ {product.price} /-</p>
-              {product.image && (
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  className="w-24 h-24 object-cover mt-2 rounded"
-                />
-              )}
-              <div className="mt-2 flex space-x-2">
-                <button
-                  onClick={() => editProduct(product.id)}
-                  className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => deleteProduct(product.id)}
-                  className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          ))}
+          </Button>
         </div>
-      </div>
-    </div>
-  );
-};
 
-export default SellerPage;
+        {/* Metrics Grid */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <MetricsCard
+            title="Total Revenue"
+            value="₹124.7K"
+            description="This month's earnings"
+            icon={DollarSign}
+            trend={{ value: 15, isPositive: true }}
+          />
+          <MetricsCard
+            title="Products Sold"
+            value="342"
+            description="Units sold this month"
+            icon={Package}
+            trend={{ value: 8, isPositive: true }}
+          />
+          <MetricsCard
+            title="Active Customers"
+            value="156"
+            description="Engaged Customer accounts"
+            icon={Users}
+            trend={{ value: 12, isPositive: true }}
+          />
+          <MetricsCard
+            title="Conversion Rate"
+            value="24.5%"
+            description="Quote to sale ratio"
+            icon={TrendingUp}
+            trend={{ value: 3, isPositive: true }}
+          />
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Recent Sales */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Sales</CardTitle>
+              <CardDescription>Your latest transactions and orders</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {recentSales.map((sale) => (
+                <div key={sale.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                  <div className="space-y-1">
+                    <p className="font-medium text-sm">{sale.product}</p>
+                    <p className="text-xs text-muted-foreground">{sale.Customer} • {sale.id}</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Badge 
+                      variant={
+                        sale.status === 'paid' ? 'default' : 
+                        sale.status === 'shipped' ? 'secondary' : 
+                        'outline'
+                      }
+                      className={
+                        sale.status === 'paid' ? 'bg-success text-success-foreground' :
+                        sale.status === 'shipped' ? 'bg-primary text-primary-foreground' :
+                        ''
+                      }
+                    >
+                      {sale.status === 'paid' && <CheckCircle className="w-3 h-3 mr-1" />}
+                      {sale.status === 'shipped' && <Clock className="w-3 h-3 mr-1" />}
+                      {sale.status === 'pending' && <AlertCircle className="w-3 h-3 mr-1" />}
+                      {sale.status}
+                    </Badge>
+                    <span className="font-semibold text-sm">{sale.amount}</span>
+                  </div>
+                </div>
+              ))}
+              <Button variant="outline" className="w-full mt-4">
+                <Eye className="mr-2 h-4 w-4" />
+                View All Sales
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Top Products */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Top Products</CardTitle>
+              <CardDescription>Your best performing product lines</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {topProducts.map((product, index) => (
+                <div key={product.name} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-gradient-to-br from-accent to-accent-glow rounded-full flex items-center justify-center text-white font-semibold text-xs">
+                        {index + 1}
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">{product.name}</p>
+                        <p className="text-xs text-muted-foreground">{product.sales} units sold</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-semibold">{product.revenue}</p>
+                      <p className="text-xs text-success">+{product.growth}%</p>
+                    </div>
+                  </div>
+                  <Progress value={product.growth * 2} className="h-1" />
+                </div>
+              ))}
+              <Button variant="outline" className="w-full mt-4">
+                <Package className="mr-2 h-4 w-4" />
+                Manage Products
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Quick Actions */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Quick Actions</CardTitle>
+            <CardDescription>Manage your business efficiently</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3 md:grid-cols-4">
+              <Button 
+                variant="outline" 
+                className="h-20 flex-col"
+                onClick={() => setAddProductOpen(true)}
+              >
+                <Plus className="h-6 w-6 mb-2" />
+                Add Product
+              </Button>
+              <Button variant="outline" className="h-20 flex-col">
+                <Users className="h-6 w-6 mb-2" />
+                View Customers
+              </Button>
+              <Button variant="outline" className="h-20 flex-col">
+                <TrendingUp className="h-6 w-6 mb-2" />
+                Sales Report
+              </Button>
+              <Button variant="outline" className="h-20 flex-col">
+                <Package className="h-6 w-6 mb-2" />
+                Inventory
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <AddProductDialog 
+        open={addProductOpen} 
+        onOpenChange={setAddProductOpen}
+      />
+    </DashboardLayout>
+  );
+}

@@ -37,7 +37,7 @@ export default function Navbar({ cart = {}, onCartClick, user }: NavbarProps) {
   const navLinks = [
     { name: "Home", path: "#home" },
     { name: "Chat", path: "#chat" },
-    { name: "Products", path: "#products" },
+    { name: "Products", path: "/products" },
     { name: "About", path: "#about" },
   ];
 
@@ -53,16 +53,28 @@ export default function Navbar({ cart = {}, onCartClick, user }: NavbarProps) {
         {/* Desktop Nav */}
         <div className="hidden md:flex space-x-6">
           {navLinks.map((link) => (
-            <HashLink
-              smooth
-              key={link.path}
-              to={link.path}
-              className={`text-sm font-medium transition-colors ${
-                currentHash === link.path ? "text-sand" : "text-white hover:text-primary"
-              }`}
-            >
-              {link.name}
-            </HashLink>
+            link.path.startsWith('#') ? (
+              <HashLink
+                smooth
+                key={link.path}
+                to={link.path}
+                className={`text-sm font-medium transition-colors ${
+                  currentHash === link.path ? "text-sand" : "text-white hover:text-primary"
+                }`}
+              >
+                {link.name}
+              </HashLink>
+            ) : (
+              <Link
+                key={link.path}
+                to={link.path}
+                className={`text-sm font-medium transition-colors ${
+                  location.pathname === link.path ? "text-sand" : "text-white hover:text-primary"
+                }`}
+              >
+                {link.name}
+              </Link>
+            )
           ))}
         </div>
 
