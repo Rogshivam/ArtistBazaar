@@ -93,9 +93,10 @@ export default function Signup() {
           confirmPassword: "",
         });
 
+        // Auto-redirect to login after successful signup
         setTimeout(() => {
           navigate("/login");
-        }, 1500);
+        }, 2000);
       } else {
         showAlert(result.message || "Signup failed", "danger");
       }

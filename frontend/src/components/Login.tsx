@@ -34,10 +34,8 @@ export default function Login() {
 
   const handleSubmit = async () => {
     setIsLoading(true);
-    let endpoint = "/api/auth/login";
-
-    if (userType === "Seller") endpoint = "/api/handle-seller/login";
-    if (userType === "Services") endpoint = "/api/services/login";
+    // All user types use the same login endpoint
+    const endpoint = "/api/auth/login";
 
     try {
       const response = await fetch(`${API_URL}${endpoint}`, {
@@ -57,10 +55,11 @@ export default function Login() {
         showAlert(json.message, "success");
         setCredentials({ email: "", password: "", userType });
 
-        // Navigate based on user type
-        if (userType === "Admin") navigate("/admin");
-        else if (userType === "Seller") navigate(`/seller/${json.seller?.id || json.user?.id}`);
-        else if (userType === "Services") navigate(`/services/${json.services?.id || json.user?.id}`);
+        // Navigate based on user role from backend response
+        const userRole = json.user?.role || userType;
+        if (userRole === "Admin") navigate("/admin");
+        else if (userRole === "Seller") navigate(`/seller/${json.user?.id}`);
+        else if (userRole === "Services") navigate(`/services/${json.user?.id}`);
         else navigate("/products"); // Customer
       } else {
         showAlert(json.message, "danger");
