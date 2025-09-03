@@ -8,7 +8,7 @@ import Avatar from 'boring-avatars';
 import logo from '../assets/logo-temp.png';
 import CartSidebar from '@/components/CartSidebar';
 import UserSidebar from '@/components/UserSidebar';
-import { useCart } from '@/context/CartContext';
+import { useCart } from '@/context/CartContext/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { useAlert } from '@/context/alert/AlertContext';
 
@@ -65,9 +65,9 @@ const Navbar: React.FC = () => {
   };
 
   const navLinks: NavLink[] = [
-    { name: 'Home', path: '#home', isHash: true },
+    { name: 'Home', path: '/',  },
     { name: 'Products', path: '/products' },
-    { name: 'About', path: '#about', isHash: true },
+    { name: 'About', path: '/about', },
     ...(user ? [{ name: 'Chat', path: '/chat' }] : []),
   ];
 
