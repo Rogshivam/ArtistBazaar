@@ -68,8 +68,7 @@ export default function Products() {
         {/* Sidebar Filters */}
         <aside
           className={`
-            bg-background p-4 rounded-r-2xl shadow-lg space-y-6
-            md:static md:translate-x-0 md:col-span-1
+            bg-background p-4 rounded-r-2xl shadow-lg space-y-4 md:sticky md:top-10 md:h-[calc(100vh-4rem)] md:w-64 md:translate-x-0 md:col-span-1
             absolute top-0 left-0 h-full w-64 z-40 transition-transform duration-300
             ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
           `}
@@ -117,11 +116,10 @@ export default function Products() {
                 <button
                   key={t}
                   onClick={() => toggleTag(t)}
-                  className={`px-3 py-1 rounded-full text-sm border transition ${
-                    selectedTagSet.has(t)
+                  className={`px-3 py-1 rounded-full text-sm border transition ${selectedTagSet.has(t)
                       ? "bg-primary text-primary-foreground"
                       : "bg-background hover:bg-muted"
-                  }`}
+                    }`}
                 >
                   #{t}
                 </button>
@@ -156,15 +154,15 @@ export default function Products() {
         </aside>
 
         {/* Product Grid */}
-        <main className="md:col-span-3">
+        <main className="md:col-span-3 overflow-hidden">
           {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-6 overflow-hidden">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="h-64 bg-muted rounded-2xl animate-pulse" />
+                <div key={i} className="h-64 bg-muted rounded-2xl animate-pulse overflow-hidden" />
               ))}
             </div>
           ) : products.length ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-6 text-xs sm:text-sm md:text-base overflow-hidden">
               {products.map((p) => (
                 <ProductCard
                   key={p._id}
@@ -180,14 +178,14 @@ export default function Products() {
               ))}
             </div>
           ) : (
-            <div className="text-center text-muted-foreground mt-20">
+            <div className="text-center text-muted-foreground mt-20 overflow-hidden">
               No products found. Try adjusting your filters.
             </div>
           )}
 
           {/* Pagination */}
           {pages > 1 && (
-            <div className="flex justify-center items-center gap-3 mt-8">
+            <div className="flex justify-center items-center gap-3 mt-8 text-sm md:text-base">
               <Button
                 variant="outline"
                 disabled={page <= 1 || loading}
@@ -208,6 +206,7 @@ export default function Products() {
             </div>
           )}
         </main>
+
       </div>
     </div>
   );

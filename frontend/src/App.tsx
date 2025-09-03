@@ -16,9 +16,11 @@ import FindSuppliers from "./pages/FindSuppliers";
 import Products from "./pages/Products";
 import Chat from "./pages/Chat";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import { CartProvider } from "./context/CartContext";
+import { CartProvider } from "./context/CartContext/CartContext";
 import { WishlistProvider } from "./context/WishlistContext";
 import { ProductProvider } from "./context/ProductContext/ProductContext";
+import ProfileView from "./pages/ProfileView";
+import DirectChat from "./pages/DirectChat";
 // import LoadingState from "./context/loading/LoadingState"; // if you also use loading context
 
 const queryClient = new QueryClient();
@@ -36,6 +38,8 @@ const App = () => (
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/products" element={<Products />} />
+                  <Route path="/profile/:id" element={<ProfileView />} />
+                  <Route path="/chat/:id" element={<DirectChat />} />
                   <Route path="/chat" element={<ProtectedRoute roles={["Customer", "Seller", "Services", "Admin"]}><Chat /></ProtectedRoute>} />
                   <Route path="/seller/:id" element={<ProtectedRoute roles={["Seller"]}><SellerPage /></ProtectedRoute>} />
                   <Route path="/Customer" element={<ProtectedRoute roles={["Customer"]}><CustomerDashboard /></ProtectedRoute>} />

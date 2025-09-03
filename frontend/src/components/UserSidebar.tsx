@@ -3,7 +3,7 @@ import { X, User, ShoppingCart, Heart, Package, Settings, LogOut, Bell, CreditCa
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { useCart } from '@/context/CartContext';
+import { useCart } from '@/context/CartContext/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { useNavigate } from 'react-router-dom';
 
