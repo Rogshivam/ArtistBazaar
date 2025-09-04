@@ -122,7 +122,7 @@ const Navbar: React.FC = () => {
             </>
           ) : (
             <Button variant="ghost" size="sm" className="text-beige hover:text-muddy-brown" onClick={handleLogout}>
-              <LogOut className="w-4 h-4 mr-1" /> Logout
+              {/* <LogOut className="w-4 h-4 mr-1" /> Logout */}
             </Button>
           )}
         </div>
@@ -192,7 +192,7 @@ const Navbar: React.FC = () => {
             </>
           ) : (
             <button onClick={handleLogout} className="block text-sm py-1 font-medium text-beige hover:text-muddy-brown">
-              <LogOut className="w-4 h-4 inline mr-1" /> Logout
+              {/* <LogOut className="w-4 h-4 inline mr-1" /> Logout */}
             </button>
           )}
         </div>

@@ -27,11 +27,11 @@ import {
 } from "@/components/ui/sidebar";
 
 const CustomerItems = [
-  { title: "Dashboard", url: "/Customer", icon: Home },
-  { title: "Browse Products", url: "/Customer/browse", icon: Package },
-  { title: "My Orders", url: "/Customer/orders", icon: ShoppingCart },
-  { title: "Suppliers", url: "/Customer/suppliers", icon: Building2 },
-  { title: "Analytics", url: "/Customer/analytics", icon: BarChart3 },
+  { title: "Dashboard", url: "/customer", icon: Home },
+  { title: "Browse Products", url: "/customer/browse", icon: Package },
+  { title: "My Orders", url: "/customer/orders", icon: ShoppingCart },
+  { title: "Suppliers", url: "/customer/suppliers", icon: Building2 },
+  { title: "Analytics", url: "/customer/analytics", icon: BarChart3 },
 ];
 
 const sellerItems = [
@@ -47,7 +47,7 @@ export function AppSidebar() {
   const location = useLocation();
   const currentPath = location.pathname;
 
-  const isCustomer = currentPath.includes('/Customer');
+  const isCustomer = currentPath.includes('/customer');
   const isSeller = currentPath.includes('/seller');
   const items = isCustomer ? CustomerItems : sellerItems;
   const isCollapsed = state === "collapsed";
