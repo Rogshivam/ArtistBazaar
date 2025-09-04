@@ -64,7 +64,7 @@ export default function Login() {
         } else if (userRole === "Services") {
           navigate(`/services/${json.user?.id}`);
         } else {
-          navigate("/products"); // Customer
+          navigate(`/customer/${json.user?.id}`); // Customer
         }
       } else {
         showError(json.message);
