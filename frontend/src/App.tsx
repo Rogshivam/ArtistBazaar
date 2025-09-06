@@ -21,6 +21,13 @@ import { WishlistProvider } from "./context/WishlistContext";
 import { ProductProvider } from "./context/ProductContext/ProductContext";
 import ProfileView from "./pages/ProfileView";
 import DirectChat from "./pages/DirectChat";
+import About from "@/components/PanelLout/About";
+import Analytics from "@/components/PanelLout/Analytics";
+import Settings from "@/components/PanelLout/Settings";
+import Services from "@/components/PanelLout/Services";
+import Dashboard from "@/components/PanelLout/Dashboard";
+
+import { Layout } from "./components/PanelLout/Layout";
 // import LoadingState from "./context/loading/LoadingState"; // if you also use loading context
 
 const queryClient = new QueryClient();
@@ -41,7 +48,26 @@ const App = () => (
                   <Route path="/profile/:id" element={<ProfileView />} />
                   <Route path="/chat/:id" element={<DirectChat />} />
                   <Route path="/chat" element={<ProtectedRoute roles={["Customer", "Seller", "Services", "Admin"]}><Chat /></ProtectedRoute>} />
-                  <Route path="/seller/:id" element={<ProtectedRoute roles={["Seller"]}><SellerPage /></ProtectedRoute>} />
+                  {/* <Route path="/seller/:id" element={<ProtectedRoute roles={["Seller"]}><SellerPage /></ProtectedRoute>}><Route path="about" element={<About />} /><Route path="/settings" element={<Settings />} /><Route path="/analytics" element={<Analytics />} /></Route> */}
+
+                  {/* Seller Dashboard with Nested Routes */}
+                  <Route
+                    path="/seller/:id"
+                    element={
+                      <ProtectedRoute roles={["Seller"]}>
+                        <Layout />
+                      </ProtectedRoute>
+                    }
+                  >
+                    <Route index element={<SellerPage />} />
+                    <Route path="about" element={<About />} />
+                    <Route path="dashboard" element={<Dashboard />} />
+                    <Route path="settings" element={<Settings />} />
+                    <Route path="analytics" element={<Analytics />} />
+                    <Route path="analytics" element={<Analytics />} />
+                    <Route path="services" element={<Services />} />
+                   
+                  </Route>
                   <Route path="/Customer/:id" element={<ProtectedRoute roles={["Customer"]}><CustomerDashboard /></ProtectedRoute>} />
                   <Route path="/Customer/suppliers" element={<ProtectedRoute roles={["Customer"]}><FindSuppliers /></ProtectedRoute>} />
                   <Route path="/admin" element={<ProtectedRoute roles={["Admin"]}><AdminPanel /></ProtectedRoute>} />
