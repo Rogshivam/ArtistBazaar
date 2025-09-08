@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Layout } from "@/components/PanelLout/Layout";
+
 import { MetricsCard } from "@/components/MetricsCard";
 import { AddProductDialog } from "@/components/AddProductDialog";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,17 @@ import {
   CheckCircle,
   Clock
 } from "lucide-react";
+ const recentSales = [
+    { id: "INV-001", product: "Industrial Valves", Customer: "BuildTech Corp", status: "paid", amount: "₹15,200" },
+    { id: "INV-002", product: "Automation Systems", Customer: "ManufacturingPro", status: "pending", amount: "₹28,500" },
+    { id: "INV-003", product: "Safety Equipment", Customer: "SafetyFirst Ltd", status: "shipped", amount: "₹5,800" },
+  ];
 
+  const topProducts = [
+    { name: "Industrial Valves", sales: 45, revenue: "₹68,400", growth: 15 },
+    { name: "Automation Systems", sales: 32, revenue: "₹124,800", growth: 22 },
+    { name: "Safety Equipment", sales: 28, revenue: "₹31,200", growth: 8 },
+  ];
 export default function SellerDashboard() {
   const [addProductOpen, setAddProductOpen] = useState(false);
   const [products, setProducts] = useState([]);
@@ -39,21 +49,11 @@ export default function SellerDashboard() {
     fetchProducts();
   }, []);
   
-  const recentSales = [
-    { id: "INV-001", product: "Industrial Valves", Customer: "BuildTech Corp", status: "paid", amount: "₹15,200" },
-    { id: "INV-002", product: "Automation Systems", Customer: "ManufacturingPro", status: "pending", amount: "₹28,500" },
-    { id: "INV-003", product: "Safety Equipment", Customer: "SafetyFirst Ltd", status: "shipped", amount: "₹5,800" },
-  ];
-
-  const topProducts = [
-    { name: "Industrial Valves", sales: 45, revenue: "₹68,400", growth: 15 },
-    { name: "Automation Systems", sales: 32, revenue: "₹124,800", growth: 22 },
-    { name: "Safety Equipment", sales: 28, revenue: "₹31,200", growth: 8 },
-  ];
+ 
 
   return (
-    <Layout>
-      <div className="space-y-6">
+    
+      <div className="flex-1 space-y-6 p-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -210,12 +210,11 @@ export default function SellerDashboard() {
             </div>
           </CardContent>
         </Card>
-      </div>
-
-      <AddProductDialog 
+        <AddProductDialog 
         open={addProductOpen} 
         onOpenChange={setAddProductOpen}
       />
-    </Layout>
+      </div>
+    
   );
 }

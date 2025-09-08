@@ -1,17 +1,23 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { HashLink } from 'react-router-hash-link';
-import { Menu, X, ShoppingCart, LogOut, Heart } from 'lucide-react';
+import { Menu, X, ShoppingCart, LogOut, Heart, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import Avatar from 'boring-avatars';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+// import Avatar from 'boring-avatars';
 import logo from '../assets/logo-temp.png';
 import CartSidebar from '@/components/CartSidebar';
-import UserSidebar from '@/components/UserSidebar';
 import { useCart } from '@/context/CartContext/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { useAlert } from '@/context/alert/AlertContext';
-
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 // Types
 interface User {
   name?: string;
@@ -26,7 +32,6 @@ interface NavLink {
 const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [isUserSidebarOpen, setIsUserSidebarOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
 
   const { getCartItemCount } = useCart();
@@ -59,15 +64,14 @@ const Navbar: React.FC = () => {
     localStorage.clear();
     setUser(null);
     setIsMenuOpen(false);
-    setIsUserSidebarOpen(false);
     showSuccess('Logged out successfully');
     navigate('/');
   };
 
   const navLinks: NavLink[] = [
-    { name: 'Home', path: '/',  },
+    { name: 'Home', path: '/', isHash: true },
     { name: 'Products', path: '/products' },
-    { name: 'About', path: '/about', },
+    { name: 'About', path: '/about', isHash: true },
     ...(user ? [{ name: 'Chat', path: '/chat' }] : []),
   ];
 
@@ -113,6 +117,7 @@ const Navbar: React.FC = () => {
           {renderNavLinks()}
           {!user ? (
             <>
+              {/* Uncomment if you want to keep these links */}
               {/* <Link to="/login" className="text-sm font-medium text-beige hover:text-muddy-brown">
                 Login
               </Link>
@@ -120,11 +125,7 @@ const Navbar: React.FC = () => {
                 Sign Up
               </Link> */}
             </>
-          ) : (
-            <Button variant="ghost" size="sm" className="text-beige hover:text-muddy-brown" onClick={handleLogout}>
-              {/* <LogOut className="w-4 h-4 mr-1" /> Logout */}
-            </Button>
-          )}
+          ) : null}
         </div>
 
         {/* Right Side */}
@@ -159,10 +160,34 @@ const Navbar: React.FC = () => {
                   </Badge>
                 )}
               </Button>
-              {/* Avatar */}
-              <Button variant="ghost" size="icon" className="rounded-full overflow-hidden" onClick={() => setIsUserSidebarOpen(true)}>
-                <Avatar size={32} name={user.name || 'Guest'} variant="beam" colors={['#5C4033', '#6B7280', '#F5F5DC', '#3F2F2A', '#8A9A5B']} />
-              </Button>
+              {/* Avatar with Dropdown */}
+              <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="relative h-10 w-10 rounded-full" aria-label="User menu">
+              <Avatar className="h-10 w-10">
+                <AvatarImage src="/placeholder.svg" alt={user?.name || "User"} />
+                <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-white">
+                  {user?.name ? user.name.slice(0, 2).toUpperCase() : "JD"}
+                </AvatarFallback>
+              </Avatar>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-48 bg-card/90 backdrop-blur-md text-foreground" align="end">
+            <DropdownMenuItem asChild>
+              <Link to="/" className="flex items-center w-full">
+                <User className="w-4 h-4 mr-2" />
+                Home
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <button onClick={handleLogout} className="flex items-center w-full">
+                <LogOut className="w-4 h-4 mr-2" />
+                Logout
+              </button>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
             </>
           )}
           {!user && (
@@ -183,6 +208,7 @@ const Navbar: React.FC = () => {
           {renderNavLinks(true)}
           {!user ? (
             <>
+              {/* Uncomment if you want to keep these links */}
               {/* <Link to="/login" onClick={() => setIsMenuOpen(false)} className="block text-sm py-1 font-medium text-beige hover:text-muddy-brown">
                 Login
               </Link>
@@ -191,12 +217,19 @@ const Navbar: React.FC = () => {
               </Link> */}
             </>
           ) : (
-            <button onClick={handleLogout} className="block text-sm py-1 font-medium text-beige hover:text-muddy-brown">
-              {/* <LogOut className="w-4 h-4 inline mr-1" /> Logout */}
+            <button
+              onClick={handleLogout}
+              className="block text-sm py-1 font-medium text-beige hover:text-muddy-brown"
+            >
+              <LogOut className="w-4 h-4 inline mr-1" />
+              Logout
             </button>
           )}
         </div>
       )}
+
+      {/* Cart Sidebar */}
+      <CartSidebar isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </header>
   );
 };

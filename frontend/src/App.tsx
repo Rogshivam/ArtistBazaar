@@ -49,7 +49,7 @@ const App = () => (
                   <Route path="/chat/:id" element={<DirectChat />} />
                   <Route path="/chat" element={<ProtectedRoute roles={["Customer", "Seller", "Services", "Admin"]}><Chat /></ProtectedRoute>} />
                   {/* <Route path="/seller/:id" element={<ProtectedRoute roles={["Seller"]}><SellerPage /></ProtectedRoute>}><Route path="about" element={<About />} /><Route path="/settings" element={<Settings />} /><Route path="/analytics" element={<Analytics />} /></Route> */}
-
+                  {/* <Route path="/seller/:id" element={<ProtectedRoute roles={["Seller"]}><SellerPage /></ProtectedRoute>} /> */}
                   {/* Seller Dashboard with Nested Routes */}
                   <Route
                     path="/seller/:id"
@@ -60,13 +60,13 @@ const App = () => (
                     }
                   >
                     <Route index element={<SellerPage />} />
+                    {/* <Route path="" element={<Dashboard />} /> */}
                     <Route path="about" element={<About />} />
                     <Route path="dashboard" element={<Dashboard />} />
                     <Route path="settings" element={<Settings />} />
                     <Route path="analytics" element={<Analytics />} />
                     <Route path="analytics" element={<Analytics />} />
                     <Route path="services" element={<Services />} />
-                   
                   </Route>
                   <Route path="/Customer/:id" element={<ProtectedRoute roles={["Customer"]}><CustomerDashboard /></ProtectedRoute>} />
                   <Route path="/Customer/suppliers" element={<ProtectedRoute roles={["Customer"]}><FindSuppliers /></ProtectedRoute>} />
