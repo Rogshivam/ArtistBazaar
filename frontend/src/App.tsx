@@ -26,6 +26,12 @@ import Analytics from "@/components/PanelLout/Analytics";
 import Settings from "@/components/PanelLout/Settings";
 import Services from "@/components/PanelLout/Services";
 import Dashboard from "@/components/PanelLout/Dashboard";
+import AdminAnalytics from "@/components/Admin/AdminAnalytics";
+import Overview from "@/components/Admin/Overview";
+import DataEntity from "@/components/Admin/DataEntity";
+import Logs from "@/components/Admin/Logs";
+import Security from "@/components/Admin/Security";
+import Users from "@/components/Admin/Users";
 
 import { Layout } from "./components/PanelLout/Layout";
 // import LoadingState from "./context/loading/LoadingState"; // if you also use loading context
@@ -60,7 +66,6 @@ const App = () => (
                     }
                   >
                     <Route index element={<SellerPage />} />
-                    {/* <Route path="" element={<Dashboard />} /> */}
                     <Route path="about" element={<About />} />
                     <Route path="dashboard" element={<Dashboard />} />
                     <Route path="settings" element={<Settings />} />
@@ -70,7 +75,26 @@ const App = () => (
                   </Route>
                   <Route path="/Customer/:id" element={<ProtectedRoute roles={["Customer"]}><CustomerDashboard /></ProtectedRoute>} />
                   <Route path="/Customer/suppliers" element={<ProtectedRoute roles={["Customer"]}><FindSuppliers /></ProtectedRoute>} />
-                  <Route path="/admin" element={<ProtectedRoute roles={["Admin"]}><AdminPanel /></ProtectedRoute>} />
+                  {/* <Route path="/admin" element={<ProtectedRoute roles={["Admin"]}><AdminPanel /></ProtectedRoute>} /> */}
+                  <Route
+                    path="/admin"
+                    element={
+                      <ProtectedRoute roles={["Admin"]}>
+                        <AdminPanel />
+                      </ProtectedRoute>
+                    }
+                  >
+                    {/* Default page (index) */}
+                    <Route index element={<Overview />} />
+
+                    {/* Nested pages */}
+                    <Route path="overview" element={<Overview />} />
+                    <Route path="analytics" element={<AdminAnalytics />} />
+                    <Route path="data-entity" element={<DataEntity />} />
+                    <Route path="logs" element={<Logs />} />
+                    <Route path="security" element={<Security />} />
+                    <Route path="users" element={<Users />} />
+                  </Route>
                   <Route path="/login" element={<Login />} />
                   <Route path="/signup" element={<Signup />} />
                   <Route path="*" element={<NotFound />} />
