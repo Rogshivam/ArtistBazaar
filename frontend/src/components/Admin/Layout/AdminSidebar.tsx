@@ -40,7 +40,7 @@ const mainItems = [
 
 const dataItems = [
   "Product",
-  "Order", 
+  "Order",
   "CartItem",
   "WishlistItem",
   "Category",
@@ -61,9 +61,9 @@ export function AdminSidebar() {
 
   const isActive = (path: string) => currentPath === path;
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
-    isActive 
-      ? "bg-primary text-primary-foreground font-medium shadow-glow" 
-      : "hover:bg-muted/50 text-foreground hover:text-primary";
+    isActive
+      ? "bg-primary text-black font-medium shadow-glow"
+      : "hover:bg-muted/50 text-black hover:text-primary-foreground";
 
   return (
     <Sidebar className={`${collapsed ? "w-16" : "w-64"} bg-card border-r shadow-card`}>
@@ -87,7 +87,7 @@ export function AdminSidebar() {
 
         {/* Main Navigation */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-medium text-foreground px-2 mb-2 opacity-100">
+          <SidebarGroupLabel className="text-xs font-medium text-foreground px-2 mb-2 text-black">
             {!collapsed && "MAIN"}
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -119,11 +119,11 @@ export function AdminSidebar() {
                   {dataItems.map((item) => (
                     <SidebarMenuItem key={item}>
                       <SidebarMenuButton asChild className="rounded-lg pl-6">
-                        <NavLink 
-                          to={`/admin/data/${item.toLowerCase()}`} 
-                          className={({ isActive }) => 
-                            isActive 
-                              ? "bg-accent/10 text-accent font-medium border-l-2 border-accent" 
+                        <NavLink
+                          to={`/admin/data/${item.toLowerCase()}`}
+                          className={({ isActive }) =>
+                            isActive
+                              ? "bg-accent/10 text-accent font-medium border-l-2 border-accent"
                               : "hover:bg-muted/30 text-foreground hover:text-primary"
                           }
                         >

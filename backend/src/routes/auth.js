@@ -38,7 +38,7 @@ r.post(["/login", "/login"], async (req, res) => {
   }
 });
 
-r.post("/students/set-password", async (req, res) => {
+r.post("/seller/set-password", async (req, res) => {
   // Frontend maps "Student" -> Seller
   try {
     const { email, password, name } = setPwdSchema.parse(req.body);
@@ -62,8 +62,7 @@ r.post("/students/set-password", async (req, res) => {
     return res.status(400).json({ message: e.message || "Failed to create account" });
   }
 });
-
-r.post("/faculty/set-password", async (req, res) => {
+r.post("/service/set-password", async (req, res) => {
   // Frontend maps "Faculty" -> Services
   try {
     const { email, password, name } = setPwdSchema.parse(req.body);

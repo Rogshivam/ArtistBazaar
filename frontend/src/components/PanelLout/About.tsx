@@ -28,7 +28,7 @@ const achievements = [
   { title: 'Customer Choice Award', description: 'Recognized by customer reviews', date: 'January 2024' },
 ];
 
-export default function About() {
+export default function AboutCustom() {
   return (
     <div className="flex-1 space-y-6 p-6">
       {/* Header */}

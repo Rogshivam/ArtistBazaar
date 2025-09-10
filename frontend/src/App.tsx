@@ -21,7 +21,7 @@ import { WishlistProvider } from "./context/WishlistContext";
 import { ProductProvider } from "./context/ProductContext/ProductContext";
 import ProfileView from "./pages/ProfileView";
 import DirectChat from "./pages/DirectChat";
-import About from "@/components/PanelLout/About";
+import AboutCustom from "@/components/PanelLout/About";
 import Analytics from "@/components/PanelLout/Analytics";
 import Settings from "@/components/PanelLout/Settings";
 import Services from "@/components/PanelLout/Services";
@@ -32,6 +32,8 @@ import DataEntity from "@/components/Admin/DataEntity";
 import Logs from "@/components/Admin/Logs";
 import Security from "@/components/Admin/Security";
 import Users from "@/components/Admin/Users";
+import { AdminLayout } from "@/components/Admin/Layout/AdminLayout";
+import About from "./pages/About";
 
 import { Layout } from "./components/PanelLout/Layout";
 // import LoadingState from "./context/loading/LoadingState"; // if you also use loading context
@@ -65,8 +67,9 @@ const App = () => (
                       </ProtectedRoute>
                     }
                   >
+                    {/* Nested pages */}
                     <Route index element={<SellerPage />} />
-                    <Route path="about" element={<About />} />
+                    <Route path="about" element={<AboutCustom />} />
                     <Route path="dashboard" element={<Dashboard />} />
                     <Route path="settings" element={<Settings />} />
                     <Route path="analytics" element={<Analytics />} />
@@ -80,7 +83,7 @@ const App = () => (
                     path="/admin"
                     element={
                       <ProtectedRoute roles={["Admin"]}>
-                        <AdminPanel />
+                        <AdminLayout />
                       </ProtectedRoute>
                     }
                   >
@@ -93,8 +96,13 @@ const App = () => (
                     <Route path="data-entity" element={<DataEntity />} />
                     <Route path="logs" element={<Logs />} />
                     <Route path="security" element={<Security />} />
+                    <Route path="data/:entity" element={<DataEntity />} />
                     <Route path="users" element={<Users />} />
+                    <Route path="domains" element={<div className="p-6">Domains management coming soon...</div>} />
+                    <Route path="code" element={<div className="p-6">Code management coming soon...</div>} />
+                    <Route path="settings" element={<div className="p-6">Settings coming soon...</div>} />
                   </Route>
+                  <Route path="about" element={<About />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/signup" element={<Signup />} />
                   <Route path="*" element={<NotFound />} />

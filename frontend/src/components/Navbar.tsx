@@ -83,9 +83,8 @@ const Navbar: React.FC = () => {
           to={link.path}
           smooth
           onClick={() => isMobile && setIsMenuOpen(false)}
-          className={`block text-sm font-medium transition-colors ${
-            currentHash === link.path ? 'text-muted-green' : 'text-beige hover:text-muddy-brown'
-          }`}
+          className={`block text-sm font-medium transition-colors ${currentHash === link.path ? 'text-muted-green' : 'text-beige hover:text-muddy-brown'
+            }`}
         >
           {link.name}
         </HashLink>
@@ -94,9 +93,8 @@ const Navbar: React.FC = () => {
           key={link.path}
           to={link.path}
           onClick={() => isMobile && setIsMenuOpen(false)}
-          className={`block text-sm font-medium transition-colors ${
-            location.pathname === link.path ? 'text-muted-green' : 'text-beige hover:text-muddy-brown'
-          }`}
+          className={`block text-sm font-medium transition-colors ${location.pathname === link.path ? 'text-muted-green' : 'text-beige hover:text-muddy-brown'
+            }`}
         >
           {link.name}
         </Link>
@@ -162,32 +160,32 @@ const Navbar: React.FC = () => {
               </Button>
               {/* Avatar with Dropdown */}
               <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-10 w-10 rounded-full" aria-label="User menu">
-              <Avatar className="h-10 w-10">
-                <AvatarImage src="/placeholder.svg" alt={user?.name || "User"} />
-                <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-white">
-                  {user?.name ? user.name.slice(0, 2).toUpperCase() : "JD"}
-                </AvatarFallback>
-              </Avatar>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-48 bg-card/90 backdrop-blur-md text-foreground" align="end">
-            <DropdownMenuItem asChild>
-              <Link to="/" className="flex items-center w-full">
-                <User className="w-4 h-4 mr-2" />
-                Home
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <button onClick={handleLogout} className="flex items-center w-full">
-                <LogOut className="w-4 h-4 mr-2" />
-                Logout
-              </button>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-10 w-10 rounded-full" aria-label="User menu">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src="/placeholder.svg" alt={user?.name || "User"} />
+                      <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-white">
+                        {user?.name ? user.name.slice(0, 2).toUpperCase() : "JD"}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-48 bg-card/90 backdrop-blur-md text-foreground" align="end">
+                  <DropdownMenuItem asChild>
+                    <Link to="/" className="flex items-center w-full">
+                      <User className="w-4 h-4 mr-2" />
+                      Home
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <button onClick={handleLogout} className="flex items-center w-full">
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Logout
+                    </button>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </>
           )}
           {!user && (

@@ -11,7 +11,7 @@ import { useAlert } from "../context/alert/AlertContext";
 interface FormData {
   email: string;
   name: string;
-  role: "Customer" | "Seller" | "Services";
+  role: "Customer" | "Seller" | "Services" ;
   password: string;
   confirmPassword: string;
 }
@@ -62,9 +62,9 @@ export default function Signup() {
     
     let endpoint = "/api/customer/set-password"; // Default to Customer
     if (formData.role === "Seller") {
-      endpoint = "/api/students/set-password";
+      endpoint = "/api/seller/set-password";
     } else if (formData.role === "Services") {
-      endpoint = "/api/faculty/set-password";
+      endpoint = "/api/services/set-password";
     }
 
     try {
