@@ -11,6 +11,8 @@ import { Heart, Users, Palette, Award, Leaf, Target } from "lucide-react";
 
 const About = () => {
   return (
+    <div>
+      <Navbar />
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <section className="relative h-[60vh] flex items-center justify-center overflow-hidden">
@@ -364,6 +366,7 @@ const About = () => {
         </div>
       </section>
     </div>
+      </div>
   );
 };
 
