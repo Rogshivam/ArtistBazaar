@@ -19,7 +19,7 @@ interface FormData {
 export default function Signup() {
   const { showSuccess, showError, showInfo } = useAlert();
   const navigate = useNavigate();
-  const api_url = import.meta.env.VITE_URL as string;
+  // const api_url = import.meta.env.VITE_URL as string;
 
   const [formData, setFormData] = useState<FormData>({
     email: "",
@@ -28,6 +28,7 @@ export default function Signup() {
     password: "",
     confirmPassword: "",
   });
+  const API_URL = import.meta.env.VITE_URL as string;
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -104,42 +105,100 @@ export default function Signup() {
     }
   };
 
-  const handleGoogleSignup = async () => {
-    setIsLoading(true);
+  // const handleGoogleSignup = async () => {
+  //   setIsLoading(true);
+  //   try {
+  //     // In a real implementation, you'd use Google OAuth
+  //     // For now, we'll simulate it
+  //     const mockGoogleUser = {
+  //       email: "newuser@gmail.com",
+  //       name: "Google User",
+  //       avatar: "https://via.placeholder.com/150",
+  //       googleId: "google456"
+  //     };
+
+  //     const response = await fetch(`${api_url}/api/auth/google/callback`, {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify(mockGoogleUser),
+  //     });
+
+  //     const json = await response.json();
+  //     if (response.ok) {
+  //       localStorage.setItem("auth-token", json.authToken);
+  //       localStorage.setItem("refresh-token", json.refreshToken);
+  //       localStorage.setItem("auth-role", "Customer");
+  //       localStorage.setItem("user-data", JSON.stringify(json.user));
+  //       showSuccess("Google signup successful!");
+  //       navigate("/products");
+  //     } else {
+  //       showError(json.message);
+  //     }
+  //   } catch (error: any) {
+  //     showError("Google signup failed");
+  //     console.error(error);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+
+const handleGoogleSignup = async () => {
+  setIsLoading(true);
+  try {
+    const mockGoogleUser = {
+      email: "newuser@gmail.com",
+      name: "New Google User",
+      avatar: "https://via.placeholder.com/150",
+      googleId: "google456",
+    };
+
+    const response = await fetch(`${API_URL}/api/auth/google/signup`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(mockGoogleUser),
+    });
+
+    let json: any = {};
     try {
-      // In a real implementation, you'd use Google OAuth
-      // For now, we'll simulate it
-      const mockGoogleUser = {
-        email: "newuser@gmail.com",
-        name: "Google User",
-        avatar: "https://via.placeholder.com/150",
-        googleId: "google456"
-      };
-
-      const response = await fetch(`${api_url}/api/auth/google/callback`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(mockGoogleUser),
-      });
-
-      const json = await response.json();
-      if (response.ok) {
-        localStorage.setItem("auth-token", json.authToken);
-        localStorage.setItem("refresh-token", json.refreshToken);
-        localStorage.setItem("auth-role", "Customer");
-        localStorage.setItem("user-data", JSON.stringify(json.user));
-        showSuccess("Google signup successful!");
-        navigate("/products");
-      } else {
-        showError(json.message);
-      }
-    } catch (error: any) {
-      showError("Google signup failed");
-      console.error(error);
-    } finally {
-      setIsLoading(false);
+      json = await response.json();
+    } catch {
+      json = {};
     }
-  };
+
+    console.log("Google signup response:", response.status, json); // 👀 debug
+
+    if (response.ok) {
+      localStorage.setItem("auth-token", json.authToken || "");
+      localStorage.setItem("refresh-token", json.refreshToken || "");
+      localStorage.setItem("auth-role", json.user?.role || "Customer");
+      localStorage.setItem("user-data", JSON.stringify(json.user || {}));
+
+      const userRole = json.user?.role || "Customer";
+
+      if (userRole === "Seller") {
+        localStorage.setItem("sellerId", json.user?.id);
+        navigate(`/seller/${json.user?.id}`);
+      } else if (userRole === "Admin") {
+        navigate("/admin");
+      } else if (userRole === "Services") {
+        navigate(`/services/${json.user?.id}`);
+      } else {
+        navigate(`/customer/${json.user?.id}`);
+      }
+
+      showSuccess(`Welcome, ${json.user?.name || "User"}!`);
+    } else {
+      showError(json.message || "Google signup failed (invalid response)");
+    }
+  } catch (error: any) {
+    showError("Google signup failed (network error)");
+    console.error(error);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 to-amber-50 p-4">

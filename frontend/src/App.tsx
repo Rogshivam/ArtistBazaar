@@ -69,6 +69,7 @@ const App = () => (
                   >
                     {/* Nested pages */}
                     <Route index element={<SellerPage />} />
+                    <Route path="home" element={<SellerPage />} />
                     <Route path="about" element={<AboutCustom />} />
                     <Route path="dashboard" element={<Dashboard />} />
                     <Route path="settings" element={<Settings />} />

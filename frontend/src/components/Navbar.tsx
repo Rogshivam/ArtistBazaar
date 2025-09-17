@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate, NavLink, useParams } from 'react-router-dom';
 import { HashLink } from 'react-router-hash-link';
 import { Menu, X, ShoppingCart, LogOut, Heart, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -38,7 +38,7 @@ const Navbar: React.FC = () => {
   const { getWishlistCount } = useWishlist();
   const { showSuccess } = useAlert();
   const location = useLocation();
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const currentHash = location.hash || '#home';
 
   // Check auth
@@ -74,6 +74,12 @@ const Navbar: React.FC = () => {
     { name: 'About', path: '/about', isHash: true },
     ...(user ? [{ name: 'Chat', path: '/chat' }] : []),
   ];
+   // inside your component
+    const { id } = useParams();
+    const navigate = useNavigate();
+    
+    // const sellerId = getSellerId();
+    const sellerId = localStorage.getItem("sellerId");
 
   const renderNavLinks = (isMobile = false) =>
     navLinks.map((link) =>
@@ -177,6 +183,15 @@ const Navbar: React.FC = () => {
                       Home
                     </Link>
                   </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                                <Link
+                                  to={  `/seller/${sellerId}`} // redirect to seller/:id or login
+                                  className="flex items-center w-full"
+                                >
+                                  <User className="w-4 h-4 mr-2" />
+                                  {sellerId ? "Profile" : "Login"}
+                                </Link>
+                              </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
                     <button onClick={handleLogout} className="flex items-center w-full">
@@ -219,8 +234,8 @@ const Navbar: React.FC = () => {
               onClick={handleLogout}
               className="block text-sm py-1 font-medium text-beige hover:text-muddy-brown"
             >
-              <LogOut className="w-4 h-4 inline mr-1" />
-              Logout
+              {/* <LogOut className="w-4 h-4 inline mr-1" /> */}
+              {/* Logout */}
             </button>
           )}
         </div>

@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { Eye, EyeOff } from "lucide-react";
 import { useAlert } from "../context/alert/AlertContext";
+import { loginSeller } from "@/lib/auth";
 
 interface Credentials {
   email: string;
@@ -20,6 +21,18 @@ export default function Login() {
     password: "",
     userType: "Customer",
   });
+  
+    const handleLogin = async () => {
+      // Example: API call to backend
+      const res = await fetch("/api/login", { method: "POST" });
+      const data = await res.json();
+
+      // Store only sellerId
+      loginSeller(data.sellerId);
+
+      // Redirect to seller dashboard
+      navigate(`/seller/${data.sellerId}`);
+    }
 
   const [errorMsg, setErrorMsg] = useState("An unknown error occurred");
   const [showPassword, setShowPassword] = useState(false);
@@ -32,88 +45,157 @@ export default function Login() {
 
   const { email, password, userType } = credentials;
 
-  const handleSubmit = async () => {
-    setIsLoading(true);
-    // All user types use the same login endpoint
-    const endpoint = "/api/auth/login";
+const handleSubmit = async () => {
+  setIsLoading(true);
+  const endpoint = "/api/auth/login";
 
-    try {
-      const response = await fetch(`${API_URL}${endpoint}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+  try {
+    const response = await fetch(`${API_URL}${endpoint}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
 
-      const json = await response.json();
-      setErrorMsg(json.message);
+    const json = await response.json();
+    setErrorMsg(json.message);
 
-      if (response.ok) {
-        localStorage.setItem("auth-token", json.authToken);
-        localStorage.setItem("refresh-token", json.refreshToken);
-        localStorage.setItem("auth-role", userType);
-        localStorage.setItem("user-data", JSON.stringify(json.user));
-        showSuccess(`Welcome back, ${json.user?.name || 'User'}!`);
-        setCredentials({ email: "", password: "", userType });
+    if (response.ok) {
+      // Store tokens and role
+      localStorage.setItem("auth-token", json.authToken);
+      localStorage.setItem("refresh-token", json.refreshToken);
+      localStorage.setItem("auth-role", userType);
+      localStorage.setItem("user-data", JSON.stringify(json.user));
 
-        // Navigate based on user role from backend response
-        const userRole = json.user?.role || userType;
-        if (userRole === "Admin") {
-          navigate("/admin");
-        } else if (userRole === "Seller") {
-          navigate(`/seller/${json.user?.id}`);
-        } else if (userRole === "Services") {
-          navigate(`/services/${json.user?.id}`);
-        } else {
-          navigate(`/customer/${json.user?.id}`); // Customer
-        }
+      const userRole = json.user?.role || userType;
+
+      if (userRole === "Seller") {
+        // Save sellerId separately
+        localStorage.setItem("sellerId", json.user?.id);
+        navigate(`/seller/${json.user?.id}`);
+      } else if (userRole === "Admin") {
+        navigate("/admin");
+      } else if (userRole === "Services") {
+        navigate(`/services/${json.user?.id}`);
       } else {
-        showError(json.message);
+        navigate(`/customer/${json.user?.id}`);
       }
-    } catch (error: any) {
-      setErrorMsg(error.message);
-      showError(error.message);
-      console.error(error);
-    } finally {
-      setIsLoading(false);
+
+      showSuccess(`Welcome back, ${json.user?.name || "User"}!`);
+      setCredentials({ email: "", password: "", userType });
+    } else {
+      showError(json.message);
     }
-  };
+  } catch (error: any) {
+    setErrorMsg(error.message);
+    showError(error.message);
+    console.error(error);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+
+//   const handleGoogleLogin = async () => {
+//     setIsLoading(true);
+//     try {
+//       // In a real implementation, you'd use Google OAuth
+//       // For now, we'll simulate it
+//       const mockGoogleUser = {
+//         email: "user@gmail.com",
+//         name: "Google User",
+//         avatar: "https://via.placeholder.com/150",
+//         googleId: "google123"
+//       };
+
+//       const response = await fetch(`${API_URL}/api/auth/google/callback`, {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify(mockGoogleUser),
+//       });
+
+//       const json = await response.json();
+//       if (response.ok) {
+//   localStorage.setItem("auth-token", json.authToken);
+//   localStorage.setItem("refresh-token", json.refreshToken);
+//   localStorage.setItem("auth-role", userType);
+//   localStorage.setItem("user-data", JSON.stringify(json.user));
+
+//   const userRole = json.user?.role || userType;
+
+//   if (userRole === "Seller") {
+//     // Save sellerId explicitly
+//     localStorage.setItem("sellerId", json.user?.id);
+//     navigate(`/seller/${json.user?.id}`);
+//   } else if (userRole === "Admin") {
+//     navigate("/admin");
+//   } else if (userRole === "Services") {
+//     navigate(`/services/${json.user?.id}`);
+//   } else {
+//     navigate(`/customer/${json.user?.id}`);
+//   }
+// }
+
+//     } catch (error: any) {
+//       showError("Google login failed");
+//       console.error(error);
+//     } finally {
+//       setIsLoading(false);
+//     }
+//   };
 
   const handleGoogleLogin = async () => {
-    setIsLoading(true);
-    try {
-      // In a real implementation, you'd use Google OAuth
-      // For now, we'll simulate it
-      const mockGoogleUser = {
-        email: "user@gmail.com",
-        name: "Google User",
-        avatar: "https://via.placeholder.com/150",
-        googleId: "google123"
-      };
+  setIsLoading(true);
+  try {
+    // Simulate Google OAuth user data (replace with real OAuth later)
+    const mockGoogleUser = {
+      email: "user@gmail.com",
+      name: "Google User",
+      avatar: "https://via.placeholder.com/150",
+      googleId: "google123",
+    };
 
-      const response = await fetch(`${API_URL}/api/auth/google/callback`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(mockGoogleUser),
-      });
+    const response = await fetch(`${API_URL}/api/auth/google/callback`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(mockGoogleUser),
+    });
 
-      const json = await response.json();
-      if (response.ok) {
-        localStorage.setItem("auth-token", json.authToken);
-        localStorage.setItem("refresh-token", json.refreshToken);
-        localStorage.setItem("auth-role", "Customer");
-        localStorage.setItem("user-data", JSON.stringify(json.user));
-        showSuccess("Google login successful!");
-        navigate("/products");
+    const json = await response.json();
+
+    if (response.ok) {
+      // ✅ Store auth data
+      localStorage.setItem("auth-token", json.authToken);
+      localStorage.setItem("refresh-token", json.refreshToken);
+      localStorage.setItem("auth-role", json.user?.role || "Customer");
+      localStorage.setItem("user-data", JSON.stringify(json.user));
+
+      // ✅ Redirect based on role
+      const userRole = json.user?.role || "Customer";
+
+      if (userRole === "Seller") {
+        localStorage.setItem("sellerId", json.user?.id); // store sellerId
+        navigate(`/seller/${json.user?.id}`);
+      } else if (userRole === "Admin") {
+        navigate("/admin");
+      } else if (userRole === "Services") {
+        navigate(`/services/${json.user?.id}`);
       } else {
-        showError(json.message);
+        navigate(`/customer/${json.user?.id}`);
       }
-    } catch (error: any) {
-      showError("Google login failed");
-      console.error(error);
-    } finally {
-      setIsLoading(false);
+
+      showSuccess(`Welcome, ${json.user?.name || "User"}!`);
+    } else {
+      showError(json.message || "Google login failed");
     }
-  };
+  } catch (error: any) {
+    showError("Google login failed");
+    console.error(error);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+
 
   const onChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setCredentials({ ...credentials, [e.target.name]: e.target.value });

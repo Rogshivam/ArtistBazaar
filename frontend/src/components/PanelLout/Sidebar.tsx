@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { NavLink, useParams } from "react-router-dom";
+import { NavLink, useParams, Link } from "react-router-dom";
 import {
   LayoutDashboard,
   User,
@@ -13,7 +13,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+
 const navigation = [
+  { name: "Home", href: "home", icon: LayoutDashboard }, // relative index route
   { name: "Dashboard", href: "dashboard", icon: LayoutDashboard }, // relative index route
   { name: "About", href: "about", icon: User },
   { name: "Services", href: "services", icon: Package },
@@ -28,20 +30,22 @@ export function Sidebar() {
   return (
     <div
       className={cn(
-        "bg-card border-r border-border transition-all duration-300 flex flex-col shadow-card",
+        "bg-card border-r border-border transition-all duration-300 flex flex-col shadow-card ",
         collapsed ? "w-16" : "w-64"
       )}
     >
       {/* Header */}
       <div className="p-4 border-b border-border flex items-center justify-between">
         <div className={cn("flex items-center gap-2", collapsed && "justify-center")}>
-          <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
-            <Store className="w-5 h-5 text-primary-foreground" />
+          <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">     
+             <Link to="/" className="flex items-center text-beige font-bold text-lg"> 
+            <Store className="w-5 h-5 text-primary-foreground" /> 
+            </Link>
           </div>
           {!collapsed && (
             <div>
-              <h1 className="font-semibold text-foreground">SellerHub</h1>
-              <p className="text-xs text-muted-foreground">Business Dashboard</p>
+              <h1 className="font-semibold text-foreground">Artist Bazaar</h1>
+              <p className="text-xs text-muted-foreground">Dashboard</p>
             </div>
           )}
         </div>
