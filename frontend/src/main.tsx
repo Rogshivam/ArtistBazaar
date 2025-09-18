@@ -6,9 +6,13 @@ import App from "./App.tsx";
 import "./index.css";
 
 const root = createRoot(document.getElementById("root")!);
+const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
+if (!clientId) {
+  console.error("VITE_GOOGLE_CLIENT_ID is not set");
+}
 root.render(
   <StrictMode>
-    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || ""}>
+    <GoogleOAuthProvider clientId={clientId}>
       <ErrorBoundary>
         <App />
       </ErrorBoundary>
