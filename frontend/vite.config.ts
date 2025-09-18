@@ -6,6 +6,10 @@ import { componentTagger } from "superdev-tagger"; // ⬅️ named import
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
+      'Cross-Origin-Embedder-Policy': 'require-corp',
+    },
     host: "::",
     port: 5173,
   },
