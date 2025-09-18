@@ -7,119 +7,218 @@ import { signToken, signRefreshToken } from "../utils/auth.js";
 
 const r = Router();
 
+// ==========================
+// SCHEMAS
+// ==========================
 const googleSchema = z.object({
   code: z.string().min(1, "Authorization code is required"),
   role: z.enum(["Customer", "Seller", "Services", "Admin"]).optional().default("Customer"),
+  redirectUri: z.string().optional(),
 });
 
+const loginSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(1, "Password is required"),
+  role: z.enum(["Customer", "Seller", "Services", "Admin"]).optional().default("Customer"),
+});
+
+const signupSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  name: z.string().min(1, "Name is required").regex(/^[a-zA-Z\s]+$/, "Name must contain only letters and spaces"),
+  password: z.string().min(6, "Password must be at least 6 characters long"),
+  role: z.enum(["Customer", "Seller", "Services"]),
+});
+
+// ==========================
+// SIGNUP ROUTE
+// ==========================
+r.post("/signup", async (req, res) => {
+  try {
+    const { email, name, password, role } = signupSchema.parse(req.body);
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      if (existingUser.googleId) {
+        return res.status(400).json({ message: "An account with this email already exists via Google. Please log in with Google." });
+      }
+      return res.status(400).json({ message: "An account with this email already exists. Please log in instead." });
+    }
+
+    // Hash password
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    // Create unique name if needed
+    let uniqueName = name;
+    let counter = 1;
+    while (await User.findOne({ name: uniqueName })) {
+      uniqueName = `${name}${counter}`;
+      counter++;
+    }
+
+    // Create user
+    const user = await User.create({
+      email,
+      name: uniqueName,
+      passwordHash,
+      role,
+      lastLogin: new Date(),
+      isActive: true,
+    });
+
+    return res.status(201).json({
+      message: "Account created successfully! Please log in.",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (e) {
+    console.error("Signup error:", e);
+    if (e instanceof z.ZodError) {
+      return res.status(400).json({ message: e.errors[0].message });
+    }
+    return res.status(500).json({ message: e.message || "Signup failed" });
+  }
+});
+
+// ==========================
+// LOGIN ROUTE
+// ==========================
+r.post("/login", async (req, res) => {
+  try {
+    const { email, password, role } = loginSchema.parse(req.body);
+
+    // Find user
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    // Check role match
+    if (role && role !== user.role) {
+      return res.status(400).json({
+        message: `Selected role (${role}) does not match account role (${user.role})`,
+      });
+    }
+
+    // Defensive: ensure user has a passwordHash (not a Google-only account)
+    if (!user.passwordHash) {
+      return res.status(400).json({ message: "This account was created via Google. Please log in with Google." });
+    }
+
+    // Verify password
+    const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    // Update last login
+    user.lastLogin = new Date();
+    await user.save();
+
+    // Tokens
+    const token = signToken({ id: String(user._id), role: user.role, email: user.email });
+    const refreshToken = signRefreshToken({ id: String(user._id), role: user.role, email: user.email });
+
+    return res.json({
+      authToken: token,
+      refreshToken,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        avatar: user.avatar,
+      },
+      message: "Login successful",
+    });
+  } catch (e) {
+    console.error("Login error:", e);
+    if (e instanceof z.ZodError) {
+      return res.status(400).json({ message: e.errors[0].message });
+    }
+    return res.status(500).json({ message: e.message || "Login failed" });
+  }
+});
+
+// ==========================
+// GOOGLE OAUTH CALLBACK
+// ==========================
 r.post("/google/callback", async (req, res) => {
   try {
     console.log("Received request to /api/auth/google/callback:", req.body);
-    const { code, role } = googleSchema.parse(req.body);
+    const { code, role, redirectUri } = googleSchema.parse(req.body);
 
-    // Validate environment variables
-    if (!process.env.API_URL) {
-      console.error("Missing API_URL in environment variables");
-      return res.status(500).json({ message: "Server configuration error: API_URL not set" });
+    if (!process.env.CLIENT_URL) {
+      return res.status(500).json({ message: "Server configuration error: CLIENT_URL not set" });
     }
     if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
-      console.error("Missing Google OAuth credentials in environment variables");
-      return res.status(500).json({ message: "Server configuration error: Google OAuth credentials not set" });
+      return res.status(500).json({ message: "Google OAuth credentials not set" });
     }
 
-    const redirectUri = `${process.env.API_URL}/google/callback`.replace(/\/$/, ""); // Remove trailing slash
-    console.log("Using redirect_uri:", redirectUri);
+    const finalRedirectUri = redirectUri || `${process.env.CLIENT_URL}/google-callback`;
 
-    // Log the full token exchange payload
-    const tokenPayload = {
-      code,
-      client_id: process.env.GOOGLE_CLIENT_ID,
-      client_secret: process.env.GOOGLE_CLIENT_SECRET,
-      redirect_uri: redirectUri,
-      grant_type: "authorization_code",
-    };
-    console.log("Token exchange payload:", tokenPayload);
-
-    // Exchange authorization code for tokens
-    const tokenResponse = await axios
-      .post("https://oauth2.googleapis.com/token", tokenPayload, {
-        headers: { "Content-Type": "application/json" },
-      })
-      .catch((error) => {
-        console.error("Token exchange error:", JSON.stringify(error.response?.data, null, 2));
-        if (error.response?.status === 400) {
-          return res.status(400).json({
-            message: `Token exchange failed: ${error.response?.data?.error || "Bad Request"}`,
-            details: error.response?.data?.error_description || "No additional details provided",
-          });
-        }
-        throw error;
-      });
+    const tokenResponse = await axios.post(
+      "https://oauth2.googleapis.com/token",
+      {
+        code,
+        client_id: process.env.GOOGLE_CLIENT_ID,
+        client_secret: process.env.GOOGLE_CLIENT_SECRET,
+        redirect_uri: finalRedirectUri,
+        grant_type: "authorization_code",
+      },
+      { headers: { "Content-Type": "application/json" } }
+    );
 
     const { access_token } = tokenResponse.data;
     if (!access_token) {
-      console.error("No access_token in token response:", tokenResponse.data);
-      return res.status(400).json({ message: "Token exchange failed: No access token received" });
+      return res.status(400).json({ message: "No access token received" });
     }
-    console.log("Token exchange successful, access_token:", access_token);
 
-    // Fetch user info
     const userInfoResponse = await axios.get("https://www.googleapis.com/oauth2/v3/userinfo", {
       headers: { Authorization: `Bearer ${access_token}` },
-    }).catch((error) => {
-      console.error("User info fetch error:", JSON.stringify(error.response?.data, null, 2));
-      throw new Error("Failed to fetch user info from Google");
     });
 
     const { email, name, picture, sub: googleId } = userInfoResponse.data;
-    console.log("User info received:", { email, name, googleId, picture });
 
     if (!email || !name || !googleId) {
-      console.error("Missing required fields in user info:", userInfoResponse.data);
       return res.status(400).json({ message: "Missing required fields from Google: email, name, or googleId" });
     }
 
     // Find or create user
-    let user = await User.findOne({ googleId });
-    if (!user) {
-      user = await User.findOne({ email });
-      if (user) {
-        user.googleId = googleId;
-        if (role && role !== user.role) {
-          return res.status(400).json({
-            message: `Selected role (${role}) does not match existing account role (${user.role})`,
-          });
-        }
-      } else {
-        let uniqueName = name;
-        let counter = 1;
-        while (await User.findOne({ name: uniqueName })) {
-          uniqueName = `${name}${counter}`;
-          counter++;
-        }
+    let user = await User.findOne({ googleId }) || await User.findOne({ email });
 
-        user = await User.create({
-          email,
-          name: uniqueName,
-          avatar: picture || "https://via.placeholder.com/150",
-          googleId,
-          role: role || "Customer",
-          lastLogin: new Date(),
-          isActive: true,
-        });
-        console.log("Created new user:", user);
+    if (!user) {
+      let uniqueName = name;
+      let counter = 1;
+      while (await User.findOne({ name: uniqueName })) {
+        uniqueName = `${name}${counter}`;
+        counter++;
       }
+
+      user = await User.create({
+        email,
+        name: uniqueName,
+        avatar: picture || "https://via.placeholder.com/150",
+        googleId,
+        role: role || "Customer",
+        lastLogin: new Date(),
+        isActive: true,
+      });
     } else if (role && role !== user.role) {
       return res.status(400).json({
         message: `Selected role (${role}) does not match existing account role (${user.role})`,
       });
     }
 
+    // Update existing user info
     user.name = name;
     user.avatar = picture || user.avatar;
     user.lastLogin = new Date();
     await user.save();
-    console.log("Updated user:", user);
 
     const token = signToken({ id: String(user._id), role: user.role, email: user.email });
     const refreshToken = signRefreshToken({ id: String(user._id), role: user.role, email: user.email });
@@ -138,11 +237,16 @@ r.post("/google/callback", async (req, res) => {
     });
   } catch (e) {
     console.error("Google callback error:", e);
+    if (e instanceof z.ZodError) {
+      return res.status(400).json({ message: e.errors[0].message });
+    }
     return res.status(500).json({ message: e.message || "Google signup failed" });
   }
 });
 
-// Logout
+// ==========================
+// LOGOUT
+// ==========================
 r.post("/logout", (req, res) => {
   return res.json({ message: "Logged out successfully" });
 });

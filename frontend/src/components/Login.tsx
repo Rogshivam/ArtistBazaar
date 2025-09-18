@@ -152,6 +152,7 @@ export default function Login() {
           body: JSON.stringify({
             code: credentialResponse.code,
             role: credentials.userType,
+            redirectUri, // Ensure this matches backend
           }),
           credentials: "include",
         });

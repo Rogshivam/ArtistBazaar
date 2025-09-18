@@ -20,7 +20,7 @@ interface FormData {
 export default function Signup() {
   const { showSuccess, showError } = useAlert();
   const navigate = useNavigate();
-  const API_URL = import.meta.env.VITE_API_URL as string; // e.g., http://localhost:4000/api/auth
+  const API_URL = import.meta.env.VITE_API_URL as string; // e.g., http://localhost:4000
   const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string;
 
   const [formData, setFormData] = useState<FormData>({
@@ -111,13 +111,7 @@ export default function Signup() {
     if (!validateInputs()) return;
 
     setIsLoading(true);
-
-    let endpoint = "/customer/set-password";
-    if (formData.role === "Seller") {
-      endpoint = "/seller/set-password";
-    } else if (formData.role === "Services") {
-      endpoint = "/service/set-password";
-    }
+    const endpoint = "/api/auth/signup";
 
     try {
       const response = await fetchWithRetry(`${API_URL}${endpoint}`, {
@@ -130,9 +124,18 @@ export default function Signup() {
           email: formData.email,
           name: formData.name,
           password: formData.password,
+          role: formData.role,
         }),
         credentials: "include",
       });
+
+      // Check if response is JSON
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await response.text();
+        console.error("Non-JSON response:", text);
+        throw new Error("Server returned a non-JSON response. Please check the API endpoint.");
+      }
 
       const result = await response.json();
 
@@ -163,7 +166,8 @@ export default function Signup() {
     onSuccess: async (credentialResponse) => {
       setIsLoading(true);
       try {
-        const response = await fetchWithRetry(`${API_URL}/google/callback`, {
+        const redirectUri = `${window.location.origin}/google-callback`;
+        const response = await fetchWithRetry(`${API_URL}/api/auth/google/callback`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -172,9 +176,19 @@ export default function Signup() {
           body: JSON.stringify({
             code: credentialResponse.code,
             role: formData.role,
+            redirectUri,
           }),
           credentials: "include",
         });
+
+        // Check if response is JSON
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          const text = await response.text();
+          console.error("Non-JSON response:", text);
+          throw new Error("Server returned a non-JSON response. Please check the API endpoint.");
+        }
+
         const json = await response.json();
 
         if (response.ok) {
