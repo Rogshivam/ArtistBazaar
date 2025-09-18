@@ -12,14 +12,14 @@ const r = Router();
 // ==========================
 const googleSchema = z.object({
   code: z.string().min(1, "Authorization code is required"),
-  role: z.enum(["Customer", "Seller", "Services", "Admin"]).optional().default("Customer"),
+  role: z.enum(["Customer", "Seller", "Services", "Admin"]).optional(),
   redirectUri: z.string().optional(),
 });
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(1, "Password is required"),
-  role: z.enum(["Customer", "Seller", "Services", "Admin"]).optional().default("Customer"),
+  role: z.enum(["Customer", "Seller", "Services", "Admin"]).optional(),
 });
 
 const signupSchema = z.object({
@@ -30,25 +30,23 @@ const signupSchema = z.object({
 });
 
 // ==========================
-// SIGNUP ROUTE
+// SIGNUP
 // ==========================
 r.post("/signup", async (req, res) => {
   try {
     const { email, name, password, role } = signupSchema.parse(req.body);
 
-    // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       if (existingUser.googleId) {
-        return res.status(400).json({ message: "An account with this email already exists via Google. Please log in with Google." });
+        return res.status(400).json({ message: "Account exists via Google. Please log in with Google." });
       }
-      return res.status(400).json({ message: "An account with this email already exists. Please log in instead." });
+      return res.status(400).json({ message: "Account already exists. Please log in." });
     }
 
-    // Hash password
     const passwordHash = await bcrypt.hash(password, 10);
 
-    // Create unique name if needed
+    // unique name enforcement
     let uniqueName = name;
     let counter = 1;
     while (await User.findOne({ name: uniqueName })) {
@@ -56,7 +54,6 @@ r.post("/signup", async (req, res) => {
       counter++;
     }
 
-    // Create user
     const user = await User.create({
       email,
       name: uniqueName,
@@ -69,7 +66,7 @@ r.post("/signup", async (req, res) => {
     return res.status(201).json({
       message: "Account created successfully! Please log in.",
       user: {
-        id: user._id,
+        id: String(user._id),
         name: user.name,
         email: user.email,
         role: user.role,
@@ -85,41 +82,31 @@ r.post("/signup", async (req, res) => {
 });
 
 // ==========================
-// LOGIN ROUTE
+// LOGIN
 // ==========================
 r.post("/login", async (req, res) => {
   try {
     const { email, password, role } = loginSchema.parse(req.body);
 
-    // Find user
     const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(401).json({ message: "Invalid email or password" });
-    }
+    if (!user) return res.status(401).json({ message: "Invalid email or password" });
 
-    // Check role match
     if (role && role !== user.role) {
       return res.status(400).json({
         message: `Selected role (${role}) does not match account role (${user.role})`,
       });
     }
 
-    // Defensive: ensure user has a passwordHash (not a Google-only account)
     if (!user.passwordHash) {
       return res.status(400).json({ message: "This account was created via Google. Please log in with Google." });
     }
 
-    // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
-    if (!isPasswordValid) {
-      return res.status(401).json({ message: "Invalid email or password" });
-    }
+    if (!isPasswordValid) return res.status(401).json({ message: "Invalid email or password" });
 
-    // Update last login
     user.lastLogin = new Date();
     await user.save();
 
-    // Tokens
     const token = signToken({ id: String(user._id), role: user.role, email: user.email });
     const refreshToken = signRefreshToken({ id: String(user._id), role: user.role, email: user.email });
 
@@ -127,7 +114,7 @@ r.post("/login", async (req, res) => {
       authToken: token,
       refreshToken,
       user: {
-        id: user._id,
+        id: String(user._id),
         name: user.name,
         email: user.email,
         role: user.role,
@@ -153,7 +140,7 @@ r.post("/google/callback", async (req, res) => {
     const { code, role, redirectUri } = googleSchema.parse(req.body);
 
     if (!process.env.CLIENT_URL) {
-      return res.status(500).json({ message: "Server configuration error: CLIENT_URL not set" });
+      return res.status(500).json({ message: "CLIENT_URL not set" });
     }
     if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
       return res.status(500).json({ message: "Google OAuth credentials not set" });
@@ -174,9 +161,7 @@ r.post("/google/callback", async (req, res) => {
     );
 
     const { access_token } = tokenResponse.data;
-    if (!access_token) {
-      return res.status(400).json({ message: "No access token received" });
-    }
+    if (!access_token) return res.status(400).json({ message: "No access token received" });
 
     const userInfoResponse = await axios.get("https://www.googleapis.com/oauth2/v3/userinfo", {
       headers: { Authorization: `Bearer ${access_token}` },
@@ -185,10 +170,9 @@ r.post("/google/callback", async (req, res) => {
     const { email, name, picture, sub: googleId } = userInfoResponse.data;
 
     if (!email || !name || !googleId) {
-      return res.status(400).json({ message: "Missing required fields from Google: email, name, or googleId" });
+      return res.status(400).json({ message: "Missing required fields from Google" });
     }
 
-    // Find or create user
     let user = await User.findOne({ googleId }) || await User.findOne({ email });
 
     if (!user) {
@@ -214,7 +198,6 @@ r.post("/google/callback", async (req, res) => {
       });
     }
 
-    // Update existing user info
     user.name = name;
     user.avatar = picture || user.avatar;
     user.lastLogin = new Date();
@@ -227,7 +210,7 @@ r.post("/google/callback", async (req, res) => {
       authToken: token,
       refreshToken,
       user: {
-        id: user._id,
+        id: String(user._id),
         name: user.name,
         email: user.email,
         role: user.role,

@@ -34,7 +34,7 @@ import Security from "@/components/Admin/Security";
 import Users from "@/components/Admin/Users";
 import { AdminLayout } from "@/components/Admin/Layout/AdminLayout";
 import About from "./pages/About";
-
+import GoogleCallback from "@/components/GoogleCallback"; // New component for handling Google OAuth callback
 import { Layout } from "./components/PanelLout/Layout";
 // import LoadingState from "./context/loading/LoadingState"; // if you also use loading context
 
@@ -104,6 +104,7 @@ const App = () => (
                     <Route path="settings" element={<div className="p-6">Settings coming soon...</div>} />
                   </Route>
                   <Route path="about" element={<About />} />
+                  <Route path="/google-callback" element={<GoogleCallback />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/signup" element={<Signup />} />
                   <Route path="*" element={<NotFound />} />

@@ -181,7 +181,6 @@ export default function Signup() {
           credentials: "include",
         });
 
-        // Check if response is JSON
         const contentType = response.headers.get("content-type");
         if (!contentType || !contentType.includes("application/json")) {
           const text = await response.text();
@@ -197,15 +196,17 @@ export default function Signup() {
           localStorage.setItem("auth-role", json.user?.role || formData.role);
           localStorage.setItem("user-data", JSON.stringify(json.user || {}));
 
+          const userId = json.user?._id || json.user?.id;
+
           if (json.user?.role === "Seller") {
-            localStorage.setItem("sellerId", json.user?.id || "");
-            navigate(`/seller/${json.user?.id}`);
+            localStorage.setItem("sellerId", userId || "");
+            navigate(`/seller/${userId}`);
           } else if (json.user?.role === "Admin") {
             navigate("/admin");
           } else if (json.user?.role === "Services") {
-            navigate(`/services/${json.user?.id}`);
+            navigate(`/services/${userId}`);
           } else {
-            navigate(`/customer/${json.user?.id}`);
+            navigate(`/customer/${userId}`);
           }
 
           showSuccess(`Welcome, ${json.user?.name || "User"}!`);
@@ -225,14 +226,13 @@ export default function Signup() {
       showError("Google authentication failed. Please try again or use manual signup.");
       setIsLoading(false);
     },
+
     flow: "auth-code",
     scope: "openid profile email",
     ux_mode: "redirect",
     redirect_uri: `${window.location.origin}/google-callback`,
-    extraParams: {
-      prompt: "select_account", // 👈 correct way to force account chooser
-    },
-  });
+    prompt: "select_account", // 👈 correct way to force account chooser
+  } as any);
 
 
   return (
