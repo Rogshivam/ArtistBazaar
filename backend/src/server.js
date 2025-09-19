@@ -1,4 +1,3 @@
-
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -15,12 +14,13 @@ dotenv.config();
 const app = express();
 
 // CORS configuration
+const corsOrigin = process.env.CORS_ORIGIN || "http://localhost:5173";
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || "http://localhost:5173",
+    origin: corsOrigin,
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "auth-token"], // Ensure all headers are allowed
+    allowedHeaders: ["Content-Type", "Authorization", "auth-token"],
   })
 );
 
@@ -34,13 +34,16 @@ app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/cart", cartRoutes);
-app.use("/api/seller", sellerRoutes); // Correct base path for seller routes
+app.use("/api/seller", sellerRoutes);
 
-// Remove redundant or conflicting route mounts (e.g., /api/auth multiple times)
+// Error handling for unmatched routes
+app.use((req, res) => {
+  res.status(404).json({ message: "Route not found" });
+});
 
 const mongo = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/artist_bazaar";
 mongoose
-.connect(mongo)
+  .connect(mongo)
   .then(() => {
     const port = Number(process.env.PORT) || 4000;
     app.listen(port, () => console.log(`API listening on http://localhost:${port}`));
