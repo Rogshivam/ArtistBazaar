@@ -118,14 +118,70 @@ export default function Login() {
     flow: "auth-code",
     scope: "openid profile email",
     ux_mode: "redirect",
-    redirect_uri: `${window.location.origin}/google-callback`,
-    onSuccess: (codeResponse) => {
-      console.log("Google code:", codeResponse.code);
-      // 🚀 redirect happens, backend handles the rest
+    redirect_uri: `${import.meta.env.VITE_API_URL}/api/auth/google/callback`, // Updated to match backend
+    onSuccess: async (codeResponse) => {
+      setIsLoading(true);
+      try {
+        const redirectUri = `${import.meta.env.VITE_API_URL}/api/auth/google/callback`;
+        const response = await fetchWithRetry(`${API_URL}/api/auth/google/callback`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+          },
+          body: JSON.stringify({
+            code: codeResponse.code,
+            role: credentials.userType,
+            redirectUri,
+          }),
+          credentials: "include",
+        });
+
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          const text = await response.text();
+          console.error("Non-JSON response:", text);
+          throw new Error("Server returned a non-JSON response. Please check the API endpoint.");
+        }
+
+        const json = await response.json();
+
+        if (response.ok) {
+          localStorage.setItem("auth-token", json.authToken || "");
+          localStorage.setItem("refresh-token", json.refreshToken || "");
+          localStorage.setItem("auth-role", json.user?.role || credentials.userType);
+          localStorage.setItem("user-data", JSON.stringify(json.user || {}));
+
+          const userId = json.user?._id || json.user?.id;
+          const userRole = json.user?.role || credentials.userType;
+
+          if (userRole === "Seller") {
+            localStorage.setItem("sellerId", userId || "");
+            navigate(`/seller/${userId}`);
+          } else if (userRole === "Admin") {
+            navigate("/admin");
+          } else if (userRole === "Services") {
+            navigate(`/services/${userId}`);
+          } else {
+            navigate(`/customer/${userId}`);
+          }
+
+          showSuccess(`Welcome back, ${json.user?.name || "User"}!`);
+        } else {
+          showError(json.message || "Google login failed");
+        }
+      } catch (error: any) {
+        showError(`Google login failed: ${error.message}`);
+        console.error("Google login error:", error);
+      } finally {
+        setIsLoading(false);
+        setRetryCount(0);
+      }
     },
     onError: (error) => {
       console.error("Google auth error:", error);
       showError("Google authentication failed. Try again.");
+      setIsLoading(false);
     },
   });
 
@@ -156,7 +212,22 @@ export default function Login() {
             disabled={isLoading || retryCount >= MAX_RETRIES || !GOOGLE_CLIENT_ID}
           >
             <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
-              <path fill="#4285F4" d="M22.56 12.25c0-.78..."/>
+              <path
+                fill="#4285F4"
+                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.22 3.31v2.77h3.59c2.1-1.94 3.27-4.79 3.27-8.09z"
+              />
+              <path
+                fill="#34A853"
+                d="M12 23c2.97 0 5.46-.99 7.28-2.7l-3.59-2.77c-.99.66-2.27 1.05-3.69 1.05-2.84 0-5.24-1.92-6.1-4.5H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M5.9 14.08c-.22-.66-.34-1.36-.34-2.08s.12-1.42.34-2.08V7.08H2.18A10.01 10.01 0 0 0 2 12c0 1.61.39 3.14 1.18 4.92L5.9 14.08z"
+              />
+              <path
+                fill="#EA4335"
+                d="M12 4.79c1.62 0 3.07.56 4.21 1.65l3.12-3.12C17.46 1.3 14.97 0 12 0 7.7 0 3.99 2.47 2.18 7.08L5.9 9.92c.86-2.58 3.26-4.5 6.1-4.5z"
+              />
             </svg>
             {isLoading ? "Processing..." : "Continue with Google"}
           </Button>

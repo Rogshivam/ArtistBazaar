@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { NavLink, useParams, Link } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -8,44 +8,65 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
-  Store
+  Store,
+  Users
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/auth/AuthContext"; // 👈 example auth context hook
 
-
-const navigation = [
-  { name: "Home", href: "home", icon: LayoutDashboard }, // relative index route
-  { name: "Dashboard", href: "dashboard", icon: LayoutDashboard }, // relative index route
+// Seller nav
+const sellerNavigation = [
+  { name: "Home", href: "home", icon: LayoutDashboard },
+  { name: "Dashboard", href: "dashboard", icon: LayoutDashboard },
   { name: "About", href: "about", icon: User },
   { name: "Services", href: "services", icon: Package },
   { name: "Analytics", href: "analytics", icon: BarChart3 },
   { name: "Settings", href: "settings", icon: Settings },
 ];
 
+// Customer nav
+const customerNavigation = [
+  { name: "Home", href: "home", icon: LayoutDashboard },
+  { name: "Dashboard", href: "dashboard", icon: LayoutDashboard },
+  { name: "About", href: "about", icon: User },
+  { name: "Suppliers", href: "suppliers", icon: Users },
+  { name: "Analytics", href: "analytics", icon: BarChart3 },
+  { name: "Settings", href: "settings", icon: Settings },
+];
+
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
-  const { id } = useParams(); // ✅ grab seller ID from URL
+  const { id } = useParams();
+  const { user } = useAuth(); // 👈 assumes { user: { role: "Seller" | "Customer", name, ... } }
+
+  // Pick correct nav + base path
+  const { basePath, navigation } = useMemo(() => {
+    if (user?.role === "Customer") {
+      return { basePath: `/customer/${id}`, navigation: customerNavigation };
+    }
+    return { basePath: `/seller/${id}`, navigation: sellerNavigation };
+  }, [user, id]);
 
   return (
     <div
       className={cn(
-        "bg-card border-r border-border transition-all duration-300 flex flex-col shadow-card ",
+        "bg-card border-r border-border transition-all duration-300 flex flex-col shadow-card",
         collapsed ? "w-16" : "w-64"
       )}
     >
       {/* Header */}
       <div className="p-4 border-b border-border flex items-center justify-between">
         <div className={cn("flex items-center gap-2", collapsed && "justify-center")}>
-          <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">     
-             <Link to="/" className="flex items-center text-beige font-bold text-lg"> 
-            <Store className="w-5 h-5 text-primary-foreground" /> 
-            </Link>
-          </div>
+          <Link to="/" className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
+            <Store className="w-5 h-5 text-primary-foreground" />
+          </Link>
           {!collapsed && (
             <div>
               <h1 className="font-semibold text-foreground">Artist Bazaar</h1>
-              <p className="text-xs text-muted-foreground">Dashboard</p>
+              <p className="text-xs text-muted-foreground">
+                {user?.role ?? "Dashboard"}
+              </p>
             </div>
           )}
         </div>
@@ -65,7 +86,7 @@ export function Sidebar() {
           {navigation.map((item) => (
             <li key={item.name}>
               <NavLink
-                to={item.href ? `/seller/${id}/${item.href}` : `/seller/${id}`}
+                to={item.href ? `${basePath}/${item.href}` : basePath}
                 end={item.href === ""}
                 className={({ isActive }) =>
                   cn(
@@ -92,10 +113,12 @@ export function Sidebar() {
           <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
             <User className="h-4 w-4 text-muted-foreground" />
           </div>
-          {!collapsed && (
+          {!collapsed && user && (
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground truncate">John Seller</p>
-              <p className="text-xs text-muted-foreground truncate">Premium Account</p>
+              <p className="text-sm font-medium text-foreground truncate">
+                {user.name || "User"}
+              </p>
+              <p className="text-xs text-muted-foreground truncate">{user.role}</p>
             </div>
           )}
         </div>

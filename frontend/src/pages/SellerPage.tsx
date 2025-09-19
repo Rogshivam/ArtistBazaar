@@ -17,42 +17,70 @@ import {
   Clock,
 } from "lucide-react";
 
+// Define types for API responses
+interface Sale {
+  id: string;
+  product: string;
+  customer: string;
+  status: "paid" | "shipped" | "pending";
+  amount: string;
+}
+
+interface Product {
+  name: string;
+  sales: number;
+  revenue: string;
+  growth: number;
+}
+
 export default function SellerDashboard() {
   const [addProductOpen, setAddProductOpen] = useState(false);
-  const [products, setProducts] = useState([]);
-  const [recentSales, setRecentSales] = useState([]);
-  const [topProducts, setTopProducts] = useState([]);
-  const [error, setError] = useState<string | null>(null); // New state for errors
+  const [products, setProducts] = useState<Product[]>([]);
+  const [recentSales, setRecentSales] = useState<Sale[]>([]);
+  const [topProducts, setTopProducts] = useState<Product[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
-  const fetchData = async () => {
-    try {
-      const API_URL = import.meta.env.VITE_URL;
-      const token = localStorage.getItem("auth-token") || "";
-      if (!token) throw new Error("No auth token");
+    const fetchData = async () => {
+      try {
+        const API_URL = import.meta.env.VITE_URL;
+        const token = localStorage.getItem("auth-token") || "";
+        console.log("API URL:", API_URL, "Token:", token ? "present" : "missing");
 
-      // Example for products fetch
-      const productsRes = await fetch(`${API_URL}/api/seller/products`, {
-        headers: { "auth-token": token },
-      });
+        const productsRes = await fetch(`${API_URL}/api/seller/products`, {
+          headers: { "auth-token": token },
+        });
+        if (!productsRes.ok) throw new Error(`Products fetch failed: ${productsRes.status}`);
+        const productsJson = await productsRes.json();
+        setProducts(productsJson.items || []);
 
-      if (!productsRes.ok) {
-        // Log raw response to see if it's HTML
-        const rawText = await productsRes.text();
-        console.error("Non-OK response (status:", productsRes.status, "):", rawText.substring(0, 200));  // First 200 chars
-        throw new Error(`API error: ${productsRes.status} - ${rawText.substring(0, 100)}`);
+        const salesRes = await fetch(`${API_URL}/api/seller/recent-sales`, {
+          headers: { "auth-token": token },
+        });
+        if (!salesRes.ok) throw new Error(`Sales fetch failed: ${salesRes.status}`);
+        const salesJson = await salesRes.json();
+        setRecentSales(salesJson.items || []);
+
+        const topRes = await fetch(`${API_URL}/api/seller/top-products`, {
+          headers: { "auth-token": token },
+        });
+        if (!topRes.ok) throw new Error(`Top products fetch failed: ${topRes.status}`);
+        const topJson = await topRes.json();
+        setTopProducts(topJson.items || []);
+
+        setError(null);
+      } catch (error) {
+        console.error("Fetch error:", error);
+        setError(error.message);
+        if (error.message.includes("401") || error.message.includes("Token expired")) {
+          localStorage.removeItem("auth-token");
+          window.location.href = "/login";
+        }
       }
+    };
 
-      const productsJson = await productsRes.json();
-      setProducts(productsJson.items || []);
-
-      // Repeat for other fetches...
-    } catch (error) {
-      console.error("Fetch error:", error);
-      setError(error.message);  // Use your error state
-    }
-  };
-  fetchData();
-}, []);
+    fetchData();
+  }, []);
 
   return (
     <div className="flex-1 space-y-6 p-6">

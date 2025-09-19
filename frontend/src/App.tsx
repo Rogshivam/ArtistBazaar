@@ -36,6 +36,7 @@ import { AdminLayout } from "@/components/Admin/Layout/AdminLayout";
 import About from "./pages/About";
 import GoogleCallback from "@/components/GoogleCallback"; // New component for handling Google OAuth callback
 import { Layout } from "./components/PanelLout/Layout";
+import { AuthProvider } from "@/context/auth/AuthContext";
 // import LoadingState from "./context/loading/LoadingState"; // if you also use loading context
 
 const queryClient = new QueryClient();
@@ -50,6 +51,7 @@ const App = () => (
               <Toaster />
               <Sonner />
               <BrowserRouter>
+              <AuthProvider>
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/products" element={<Products />} />
@@ -74,11 +76,28 @@ const App = () => (
                     <Route path="dashboard" element={<Dashboard />} />
                     <Route path="settings" element={<Settings />} />
                     <Route path="analytics" element={<Analytics />} />
-                    <Route path="analytics" element={<Analytics />} />
                     <Route path="services" element={<Services />} />
                   </Route>
-                  <Route path="/Customer/:id" element={<ProtectedRoute roles={["Customer"]}><CustomerDashboard /></ProtectedRoute>} />
-                  <Route path="/Customer/suppliers" element={<ProtectedRoute roles={["Customer"]}><FindSuppliers /></ProtectedRoute>} />
+                  <Route
+                    path="/customer/:id"
+                    element={
+                      <ProtectedRoute roles={["Customer"]}>
+                        <Layout />   
+                      </ProtectedRoute>
+                    }
+                  >
+                    {/* Nested routes same as seller */}
+                    <Route index element={<CustomerDashboard />} />
+                    <Route path="home" element={<CustomerDashboard />} />
+                    <Route path="about" element={<AboutCustom />} />
+                    <Route path="dashboard" element={<Dashboard />} />
+                    <Route path="settings" element={<Settings />} />
+                    <Route path="analytics" element={<Analytics />} />
+                    <Route path="services" element={<Services />} />
+                    <Route path="suppliers" element={<FindSuppliers />} />
+                  </Route>
+                  {/* <Route path="/Customer/:id" element={<ProtectedRoute roles={["Customer"]}><CustomerDashboard /></ProtectedRoute>} />
+                  <Route path="/Customer/suppliers" element={<ProtectedRoute roles={["Customer"]}><FindSuppliers /></ProtectedRoute>} /> */}
                   {/* <Route path="/admin" element={<ProtectedRoute roles={["Admin"]}><AdminPanel /></ProtectedRoute>} /> */}
                   <Route
                     path="/admin"
@@ -109,6 +128,7 @@ const App = () => (
                   <Route path="/signup" element={<Signup />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
+                </AuthProvider>
               </BrowserRouter>
             </TooltipProvider>
           </WishlistProvider>

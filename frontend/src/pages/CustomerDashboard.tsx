@@ -30,8 +30,8 @@ export default function CustomerDashboard() {
   ];
 
   return (
-    <Layout>
-      <div className="space-y-6">
+    
+      <div className="space-y-6 flex-1 p-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -182,6 +182,6 @@ export default function CustomerDashboard() {
           </CardContent>
         </Card>
       </div>
-    </Layout>
+    
   );
 }

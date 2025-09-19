@@ -13,7 +13,6 @@ const r = Router();
 const googleSchema = z.object({
   code: z.string().min(1, "Authorization code is required"),
   role: z.enum(["Customer", "Seller", "Services", "Admin"]).optional(),
-  redirectUri: z.string().optional(),
 });
 
 const loginSchema = z.object({
@@ -46,7 +45,6 @@ r.post("/signup", async (req, res) => {
 
     const passwordHash = await bcrypt.hash(password, 10);
 
-    // unique name enforcement
     let uniqueName = name;
     let counter = 1;
     while (await User.findOne({ name: uniqueName })) {
@@ -137,7 +135,7 @@ r.post("/login", async (req, res) => {
 r.post("/google/callback", async (req, res) => {
   try {
     console.log("Received request to /api/auth/google/callback:", req.body);
-    const { code, role, redirectUri } = googleSchema.parse(req.body);
+    const { code, role } = googleSchema.parse(req.body);
 
     if (!process.env.CLIENT_URL) {
       return res.status(500).json({ message: "CLIENT_URL not set" });
@@ -146,7 +144,7 @@ r.post("/google/callback", async (req, res) => {
       return res.status(500).json({ message: "Google OAuth credentials not set" });
     }
 
-    const finalRedirectUri = redirectUri || `${process.env.CLIENT_URL}/google-callback`;
+    const finalRedirectUri = `${process.env.CLIENT_URL}/api/auth/google/callback`; // Fixed URI
 
     const tokenResponse = await axios.post(
       "https://oauth2.googleapis.com/token",

@@ -13,7 +13,7 @@ if (!clientId) {
 root.render(
   <StrictMode>
     <GoogleOAuthProvider clientId={clientId}>
-      <ErrorBoundary>
+      <ErrorBoundary >
         <App />
       </ErrorBoundary>
     </GoogleOAuthProvider>
