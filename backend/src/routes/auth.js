@@ -132,6 +132,21 @@ r.post("/login", async (req, res) => {
 // ==========================
 // GOOGLE OAUTH CALLBACK
 // ==========================
+r.get("/google/callback", (req, res) => {
+  try {
+    const { code } = req.query;
+    if (!code || typeof code !== "string") {
+      return res.status(400).json({ message: "Authorization code missing or invalid" });
+    }
+    console.log("Redirecting to frontend with code:", code);
+    const frontendCallbackUrl = `${process.env.CLIENT_URL}/google-callback?code=${encodeURIComponent(code)}`;
+    return res.redirect(302, frontendCallbackUrl);
+  } catch (e) {
+    console.error("GET callback error:", e);
+    return res.status(500).json({ message: e.message || "Redirect failed" });
+  }
+});
+
 r.post("/google/callback", async (req, res) => {
   try {
     console.log("Received request to /api/auth/google/callback:", req.body);
@@ -144,7 +159,7 @@ r.post("/google/callback", async (req, res) => {
       return res.status(500).json({ message: "Google OAuth credentials not set" });
     }
 
-    const finalRedirectUri = `${process.env.CLIENT_URL}/api/auth/google/callback`; // Fixed URI
+    const finalRedirectUri = `${process.env.CLIENT_URL}/api/auth/google/callback`;
 
     const tokenResponse = await axios.post(
       "https://oauth2.googleapis.com/token",
@@ -214,14 +229,14 @@ r.post("/google/callback", async (req, res) => {
         role: user.role,
         avatar: user.avatar,
       },
-      message: "Google signup successful",
+      message: "Google signup/login successful",
     });
   } catch (e) {
     console.error("Google callback error:", e);
     if (e instanceof z.ZodError) {
       return res.status(400).json({ message: e.errors[0].message });
     }
-    return res.status(500).json({ message: e.message || "Google signup failed" });
+    return res.status(500).json({ message: e.message || "Google login failed" });
   }
 });
 
