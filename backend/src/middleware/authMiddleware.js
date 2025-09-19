@@ -1,23 +1,3 @@
-// import jwt from "jsonwebtoken";
-
-// export default function authMiddleware(req, res, next) {
-//   try {
-//     const token = req.header("auth-token");
-//     if (!token) {
-//       return res.status(401).json({ error: "Access denied. No token provided." });
-//     }
-
-//     // verify token
-//     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-//     req.user = decoded; // decoded will typically contain { id, email, ... }
-
-//     next();
-//   } catch (err) {
-//     res.status(401).json({ error: "Invalid token" });
-//   }
-// }
-// backend/src/middleware/authMiddleware.js
-// middleware/authMiddleware.js
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 

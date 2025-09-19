@@ -139,7 +139,9 @@ r.get("/google/callback", (req, res) => {
       return res.status(400).json({ message: "Authorization code missing or invalid" });
     }
     console.log("Redirecting to frontend with code:", code);
-    const frontendCallbackUrl = `${process.env.CLIENT_URL}/google-callback?code=${encodeURIComponent(code)}`;
+    // Validate and fallback for CLIENT_URL
+    const clientUrl = process.env.CLIENT_URL || "http://localhost:5173"; // Fallback for local testing
+    const frontendCallbackUrl = `${clientUrl}/google-callback?code=${encodeURIComponent(code)}`;
     return res.redirect(302, frontendCallbackUrl);
   } catch (e) {
     console.error("GET callback error:", e);
