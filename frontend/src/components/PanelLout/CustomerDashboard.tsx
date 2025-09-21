@@ -52,16 +52,12 @@ export default function CustomerDashboard() {
         const cartItems = getCartItemCount();
         const wishlistItems = wishlist.length;
         
-        // Mock data for orders (replace with actual API call)
-        const recentOrders = [
-          { id: "1", product: "Handmade Pottery", seller: "Artisan Studio", amount: 45.99, status: "delivered", date: "2024-01-15" },
-          { id: "2", product: "Wooden Sculpture", seller: "Craft Master", amount: 89.99, status: "shipped", date: "2024-01-14" },
-          { id: "3", product: "Textile Art", seller: "Fiber Arts", amount: 34.50, status: "processing", date: "2024-01-13" }
-        ];
-        
-        // Fetch recommended products
+        // NOTE: Replace this with a real orders endpoint when available
+        const recentOrders: any[] = [];
+
+        // Fetch recommended products (top 6 from listing)
         const productsData = await apiService.getProducts({ limit: "6" });
-        const recommendedProducts = productsData.products || [];
+        const recommendedProducts = (productsData as any).items || [];
         
         const totalOrders = recentOrders.length;
         const totalSpent = recentOrders.reduce((sum, order) => sum + order.amount, 0);
@@ -74,7 +70,7 @@ export default function CustomerDashboard() {
           recentOrders,
           recommendedProducts
         });
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error fetching customer data:", error);
       } finally {
         setLoading(false);
