@@ -8,10 +8,21 @@ interface ApiProduct {
   description: string;
   category: string;
   price: number;
+  // Primary field used by the UI
   images?: string[];
+  // Possible backend variants we'll normalize from
+  image?: string;
+  imagesData?: Array<{ url?: string; publicId?: string }>;
   tags?: string[];
   artisan?: string;
   location?: string;
+}
+
+interface ProductListResponse {
+  items: any[];
+  total: number;
+  page: number;
+  pages: number;
 }
 
 interface ProductContextType {
@@ -222,7 +233,7 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
   const fetchProducts = async (p = 1) => {
     setLoading(true);
     try {
-      const data = await apiService.getProducts({
+      const data = (await apiService.getProducts({
         page: p.toString(),
         limit: "24",
         ...(q && { q }),
@@ -230,9 +241,21 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
         ...(tags.length > 0 && { tags: tags.join(",") }),
         ...(minPrice && { minPrice }),
         ...(maxPrice && { maxPrice }),
-      });
+      })) as ProductListResponse;
       
-      setProducts(data.items || []);
+      // Normalize image fields so UI always gets images: string[]
+      const normalizedItems: ApiProduct[] = (data.items || []).map((item: any) => {
+        const imgs: string[] = Array.isArray(item?.images) && item.images.length
+          ? item.images
+          : Array.isArray(item?.imagesData) && item.imagesData.length
+            ? item.imagesData.map((x: any) => x?.url).filter(Boolean)
+            : item?.image
+              ? [item.image]
+              : [];
+        return { ...item, images: imgs } as ApiProduct;
+      });
+
+      setProducts(normalizedItems);
       setPage(data.page || p);
       setPages(data.pages || 1);
     } catch (error) {

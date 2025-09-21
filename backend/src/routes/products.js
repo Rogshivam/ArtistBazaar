@@ -3,6 +3,14 @@ import { z } from "zod";
 import Product from "../models/Product.js";
 import { requireAuth } from "../utils/auth.js";
 
+function normalizeImages(p) {
+  if (!p) return [];
+  if (Array.isArray(p.images) && p.images.length) return p.images;
+  if (Array.isArray(p.imagesData) && p.imagesData.length) return p.imagesData.map((x) => x?.url).filter(Boolean);
+  if (p.image) return [p.image];
+  return [];
+}
+
 const r = Router();
 
 r.get("/", async (req, res) => {
@@ -28,10 +36,16 @@ r.get("/", async (req, res) => {
     const limitNum = Math.max(1, Math.min(100, parseInt(String(limit)) || 20));
     const skip = (pageNum - 1) * limitNum;
 
-    const [items, total] = await Promise.all([
+    const [docs, total] = await Promise.all([
       Product.find(filter).populate('seller', 'name email').sort(String(sort)).skip(skip).limit(limitNum),
       Product.countDocuments(filter),
     ]);
+
+    const items = docs.map((p) => ({
+      ...p.toObject(),
+      images: normalizeImages(p),
+    }));
+
     return res.json({ items, total, page: pageNum, pages: Math.ceil(total / limitNum) });
   } catch (error) {
     return res.status(500).json({ message: "Error fetching products", error: error.message });
@@ -71,10 +85,11 @@ r.get("/seller/products", requireAuth(["Seller"]), async (req, res) => {
 // Get single product by ID
 r.get("/:id", async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id).populate('seller', 'name email avatar');
-    if (!product) {
+    const productDoc = await Product.findById(req.params.id).populate('seller', 'name email avatar');
+    if (!productDoc) {
       return res.status(404).json({ message: "Product not found" });
     }
+    const product = { ...productDoc.toObject(), images: normalizeImages(productDoc) };
     return res.json({ product });
   } catch (error) {
     return res.status(500).json({ message: "Error fetching product", error: error.message });

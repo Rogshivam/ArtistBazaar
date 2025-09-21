@@ -14,9 +14,46 @@ async function ensureCart(userId) {
   return cart;
 }
 
+// Normalize product images into a string[] of URLs
+function normalizeImages(product) {
+  if (!product) return [];
+  if (Array.isArray(product.images) && product.images.length) return product.images;
+  if (Array.isArray(product.imagesData) && product.imagesData.length) {
+    return product.imagesData.map((x) => x?.url).filter(Boolean);
+  }
+  if (product.image) return [product.image];
+  return [];
+}
+
+// Populate cart items with product details needed by frontend
+async function getPopulatedCartItems(userId) {
+  const cart = await ensureCart(userId);
+  // populate the product doc for each item
+  await cart.populate({ path: "items.productId", model: "Product" });
+  const items = cart.items.map((item) => {
+    const p = item.productId;
+    const product = p
+      ? {
+          _id: String(p._id),
+          name: p.name,
+          price: p.price,
+          images: normalizeImages(p),
+          category: p.category,
+        }
+      : undefined;
+    return {
+      productId: String(item.productId),
+      quantity: item.quantity,
+      priceSnapshot: item.priceSnapshot,
+      ...(product ? { product } : {}),
+    };
+  });
+  return items;
+}
+
 r.get("/", requireAuth(), async (req, res) => {
-  const cart = await ensureCart(req.user.id);
-  return res.json(cart);
+  const items = await getPopulatedCartItems(req.user.id);
+  return res.json({ items });
 });
 
 r.post("/add", requireAuth(), async (req, res) => {
@@ -32,7 +69,8 @@ r.post("/add", requireAuth(), async (req, res) => {
       cart.items.push({ productId, quantity, priceSnapshot: product.price });
     }
     await cart.save();
-    return res.json({ message: "Added to cart", cart });
+    const items = await getPopulatedCartItems(req.user.id);
+    return res.json({ message: "Added to cart", cart: { items } });
   } catch (e) {
     return res.status(400).json({ message: e.message || "Invalid payload" });
   }
@@ -50,7 +88,8 @@ r.post("/update", requireAuth(), async (req, res) => {
       cart.items[idx].quantity = quantity;
     }
     await cart.save();
-    return res.json({ message: "Cart updated", cart });
+    const items = await getPopulatedCartItems(req.user.id);
+    return res.json({ message: "Cart updated", cart: { items } });
   } catch (e) {
     return res.status(400).json({ message: e.message || "Invalid payload" });
   }
@@ -60,7 +99,7 @@ r.post("/clear", requireAuth(), async (req, res) => {
   const cart = await ensureCart(req.user.id);
   cart.items = [];
   await cart.save();
-  return res.json({ message: "Cart cleared", cart });
+  return res.json({ message: "Cart cleared", cart: { items: [] } });
 });
 
 export default r;

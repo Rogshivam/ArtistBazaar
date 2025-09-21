@@ -14,6 +14,8 @@ import {
 // import Avatar from 'boring-avatars';
 import logo from '../assets/logo-temp.png';
 import CartSidebar from '@/components/CartSidebar';
+import WishlistDrawer from '@/components/WishlistDrawer';
+
 import { useCart } from '@/context/CartContext/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { useAlert } from '@/context/alert/AlertContext';
@@ -32,6 +34,8 @@ interface NavLink {
 const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isWishlistOpen, setIsWishlistOpen] = useState(false);
+
   const [user, setUser] = useState<User | null>(null);
 
   const { getCartItemCount } = useCart();
@@ -142,7 +146,8 @@ const Navbar: React.FC = () => {
                 variant="ghost"
                 size="icon"
                 className="relative text-beige hover:text-muddy-brown"
-                onClick={() => navigate('/products')}
+                onClick={() => setIsWishlistOpen(true)}
+                aria-label="Open wishlist"
               >
                 <Heart className="h-5 w-5" />
                 {getWishlistCount() > 0 && (
@@ -151,6 +156,7 @@ const Navbar: React.FC = () => {
                   </Badge>
                 )}
               </Button>
+
               {/* Cart */}
               <Button
                 variant="ghost"
@@ -242,8 +248,9 @@ const Navbar: React.FC = () => {
         </div>
       )}
 
-      {/* Cart Sidebar */}
+      {/* Drawers */}
       <CartSidebar isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+      <WishlistDrawer isOpen={isWishlistOpen} onClose={() => setIsWishlistOpen(false)} />
     </header>
   );
 };
