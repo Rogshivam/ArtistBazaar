@@ -28,6 +28,7 @@ import Services from "@/components/PanelLout/Services";
 import Dashboard from "@/components/PanelLout/Dashboard";
 import SellerDashboard from "@/components/PanelLout/SellerDashboard";
 import CustomerDashboard from "@/components/PanelLout/CustomerDashboard";
+import CustomerOrders from "@/pages/CustomerOrders";
 import SellerAnalytics from "@/components/PanelLout/SellerAnalytics";
 import SellerSettings from "@/components/PanelLout/SellerSettings";
 import SellerAbout from "@/components/PanelLout/SellerAbout";
@@ -98,6 +99,7 @@ const App = () => (
                     {/* Nested routes same as seller */}
                     <Route index element={<CustomerDashboard />} />
                     <Route path="home" element={<CustomerDashboard />} />
+                    <Route path="orders" element={<CustomerOrders />} />
                     <Route path="about" element={<AboutCustom />} />
                     <Route path="dashboard" element={<CustomerDashboard />} />
                     <Route path="settings" element={<CustomerSettings />} />
