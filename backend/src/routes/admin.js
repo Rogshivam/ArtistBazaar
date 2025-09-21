@@ -6,10 +6,22 @@ import Product from "../models/Product.js";
 const r = Router();
 
 r.get("/overview", requireAuth(["Admin"]), async (_req, res) => {
-  const totalSellers = await User.countDocuments({ role: "Seller" });
-  const totalServices = await User.countDocuments({ role: "Services" });
-  const totalProducts = await Product.countDocuments();
-  return res.json({ totalSellers, totalServices, totalProducts, anomaliesDetected: 0 });
+  try {
+    const totalSellers = await User.countDocuments({ role: "Seller" });
+    const totalServices = await User.countDocuments({ role: "Services" });
+    const totalCustomers = await User.countDocuments({ role: "Customer" });
+    const totalProducts = await Product.countDocuments();
+    return res.json({ 
+      totalSellers, 
+      totalServices, 
+      totalCustomers,
+      totalProducts, 
+      anomaliesDetected: 0 
+    });
+  } catch (error) {
+    console.error("Admin overview error:", error);
+    return res.status(500).json({ message: "Failed to fetch admin overview" });
+  }
 });
 
 r.get("/sellers", requireAuth(["Admin"]), async (_req, res) => {

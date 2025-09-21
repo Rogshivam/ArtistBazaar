@@ -2,12 +2,17 @@ import jwt from "jsonwebtoken";
 
 export function signToken(user) {
   const secret = process.env.JWT_SECRET || "devsecret";
-  return jwt.sign(user, secret, { expiresIn: "5m" }); // 5 minute session
+  return jwt.sign(user, secret, { expiresIn: "15m" }); // 15 minute session
 }
 
 export function signRefreshToken(user) {
-  const secret = process.env.JWT_SECRET || "devsecret";
+  const secret = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET || "devsecret";
   return jwt.sign(user, secret, { expiresIn: "7d" }); // 7 day refresh
+}
+
+export function verifyRefreshToken(token) {
+  const secret = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET || "devsecret";
+  return jwt.verify(token, secret);
 }
 
 export function requireAuth(roles) {

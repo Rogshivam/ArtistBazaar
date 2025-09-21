@@ -19,11 +19,6 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: "https://via.placeholder.com/150" // Default avatar
   },
-  googleId: { 
-    type: String, 
-    unique: true,
-    sparse: true // Allows multiple null values for non-Google users
-  },
   role: { 
     type: String, 
     enum: ["Customer", "Seller", "Services", "Admin"], 
@@ -32,6 +27,7 @@ const userSchema = new mongoose.Schema({
   },
   passwordHash: { 
     type: String,
+    required: true,
     select: false // Exclude from queries by default for security
   },
   lastLogin: { 
@@ -41,13 +37,77 @@ const userSchema = new mongoose.Schema({
   isActive: { 
     type: Boolean, 
     default: true 
+  },
+  emailVerified: {
+    type: Boolean,
+    default: false
+  },
+  failedLoginAttempts: {
+    type: Number,
+    default: 0
+  },
+  lockUntil: {
+    type: Date
+  },
+  // Profile information
+  bio: {
+    type: String,
+    maxlength: 500
+  },
+  location: {
+    type: String,
+    maxlength: 100
+  },
+  phone: {
+    type: String,
+    maxlength: 20
+  },
+  website: {
+    type: String,
+    maxlength: 200
+  },
+  // Social media links
+  socialMedia: {
+    instagram: { type: String, maxlength: 100 },
+    facebook: { type: String, maxlength: 100 },
+    twitter: { type: String, maxlength: 100 }
+  },
+  // Professional information (for sellers)
+  specialties: [{
+    type: String,
+    maxlength: 50
+  }],
+  experience: {
+    type: String,
+    maxlength: 100
+  },
+  education: {
+    type: String,
+    maxlength: 200
+  },
+  achievements: [{
+    type: String,
+    maxlength: 200
+  }],
+  awards: [{
+    type: String,
+    maxlength: 200
+  }],
+  // Cloudinary image data
+  avatarData: {
+    publicId: String,
+    url: String,
+    width: Number,
+    height: Number,
+    format: String
   }
 }, {
   timestamps: true // Auto-add createdAt and updatedAt
 });
 
-// Ensure no unique index on name (explicitly non-unique)
-userSchema.index({ name: 1 }, { unique: false });
+// Index for efficient queries
+userSchema.index({ email: 1 });
+userSchema.index({ name: 1 });
 
 // Pre-save hook for password hashing (if modified)
 userSchema.pre("save", async function (next) {
@@ -58,6 +118,11 @@ userSchema.pre("save", async function (next) {
   next();
 });
 
+// Virtual for account lockout
+userSchema.virtual('isLocked').get(function() {
+  return !!(this.lockUntil && this.lockUntil > Date.now());
+});
+
 // Method to compare passwords
 userSchema.methods.comparePassword = async function (candidatePassword) {
   if (!this.passwordHash) return false;
@@ -65,28 +130,33 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.passwordHash);
 };
 
-// Index for efficient queries
-userSchema.index({ email: 1 });
-userSchema.index({ googleId: 1 });
+// Method to handle failed login attempts
+userSchema.methods.incLoginAttempts = function() {
+  // If we have a previous lock that has expired, restart at 1
+  if (this.lockUntil && this.lockUntil < Date.now()) {
+    return this.updateOne({
+      $unset: { lockUntil: 1 },
+      $set: { failedLoginAttempts: 1 }
+    });
+  }
+  
+  const updates = { $inc: { failedLoginAttempts: 1 } };
+  
+  // Lock account after 5 failed attempts for 2 hours
+  if (this.failedLoginAttempts + 1 >= 5 && !this.isLocked) {
+    updates.$set = { lockUntil: Date.now() + 2 * 60 * 60 * 1000 }; // 2 hours
+  }
+  
+  return this.updateOne(updates);
+};
+
+// Method to reset failed login attempts
+userSchema.methods.resetLoginAttempts = function() {
+  return this.updateOne({
+    $unset: { failedLoginAttempts: 1, lockUntil: 1 }
+  });
+};
+
 
 const User = mongoose.model("User", userSchema);
 export default User;
-
-// import mongoose from "mongoose";
-
-// const userSchema = new mongoose.Schema({
-//   email: { type: String, required: true, unique: true },
-//   name: { type: String, required: true },
-//   avatar: { type: String },
-//   googleId: { type: String, unique: true },
-//   role: { type: String, enum: ["Customer", "Seller", "Services", "Admin"], default: "Customer" },
-//   passwordHash: { type: String },
-//   lastLogin: { type: Date },
-//   isActive: { type: Boolean, default: true },
-// });
-
-// // Ensure no unique index on name
-// userSchema.index({ name: 1 }, { unique: false });
-
-// const User = mongoose.model("User", userSchema);
-// export default User;

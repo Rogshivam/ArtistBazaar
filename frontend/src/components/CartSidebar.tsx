@@ -1,8 +1,10 @@
 import React from 'react';
-import { X, Plus, Minus, Trash2, ShoppingBag } from 'lucide-react';
+import { X, Plus, Minus, Trash2, ShoppingBag, RefreshCw, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
+import { useCart } from '@/context/CartContext/CartContext';
 
 interface CartItem {
   productId: string;
@@ -19,23 +21,25 @@ interface CartItem {
 interface CartSidebarProps {
   isOpen: boolean;
   onClose: () => void;
-  cart: CartItem[];
-  onUpdateQuantity: (productId: string, quantity: number) => Promise<void>;
-  onRemoveItem: (productId: string) => Promise<void>;
 }
 
 const CartSidebar: React.FC<CartSidebarProps> = ({
   isOpen,
-  onClose,
-  cart,
-  onUpdateQuantity,
-  onRemoveItem
+  onClose
 }) => {
   const { toast } = useToast();
+  const { 
+    cart, 
+    updateCartQuantity, 
+    removeFromCart, 
+    isLoading, 
+    error, 
+    refreshCart 
+  } = useCart();
 
   const handleQuantityChange = async (productId: string, newQuantity: number) => {
     try {
-      await onUpdateQuantity(productId, newQuantity);
+      await updateCartQuantity(productId, newQuantity);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -47,7 +51,7 @@ const CartSidebar: React.FC<CartSidebarProps> = ({
 
   const handleRemoveItem = async (productId: string) => {
     try {
-      await onRemoveItem(productId);
+      await removeFromCart(productId);
       toast({
         title: "Item removed",
         description: "Item has been removed from your cart"
@@ -61,7 +65,24 @@ const CartSidebar: React.FC<CartSidebarProps> = ({
     }
   };
 
+  const handleRefresh = async () => {
+    try {
+      await refreshCart();
+      toast({
+        title: "Cart refreshed",
+        description: "Your cart has been updated"
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to refresh cart",
+        variant: "destructive"
+      });
+    }
+  };
+
   const getTotal = () => {
+    if (!cart || cart.length === 0) return 0;
     return cart.reduce((total, item) => total + (item.priceSnapshot * item.quantity), 0);
   };
 
@@ -83,20 +104,57 @@ const CartSidebar: React.FC<CartSidebarProps> = ({
             <h2 className="text-lg font-semibold flex items-center gap-2">
               <ShoppingBag className="w-5 h-5" />
               Shopping Cart
-              {cart.length > 0 && (
+              {cart && cart.length > 0 && (
                 <Badge variant="secondary" className="ml-2">
                   {cart.reduce((total, item) => total + item.quantity, 0)}
                 </Badge>
               )}
             </h2>
-            <Button variant="ghost" size="icon" onClick={onClose}>
-              <X className="w-4 h-4" />
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={handleRefresh}
+                disabled={isLoading}
+              >
+                <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={onClose}>
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
+
+          {/* Error Display */}
+          {error && (
+            <div className="p-4">
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  {error}
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="ml-2"
+                    onClick={handleRefresh}
+                  >
+                    Retry
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            </div>
+          )}
 
           {/* Cart Items */}
           <div className="flex-1 overflow-y-auto p-4">
-            {cart.length === 0 ? (
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center h-full text-center">
+                <RefreshCw className="w-8 h-8 text-muted-foreground mb-4 animate-spin" />
+                <h3 className="text-lg font-medium text-muted-foreground mb-2">
+                  Loading cart...
+                </h3>
+              </div>
+            ) : !cart || cart.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center">
                 <ShoppingBag className="w-16 h-16 text-muted-foreground mb-4" />
                 <h3 className="text-lg font-medium text-muted-foreground mb-2">
@@ -110,9 +168,17 @@ const CartSidebar: React.FC<CartSidebarProps> = ({
               <div className="space-y-4">
                 {cart.map((item) => (
                   <div key={item.productId} className="flex items-center gap-3 p-3 border rounded-lg">
-                    {/* Product Image Placeholder */}
-                    <div className="w-16 h-16 bg-muted rounded-md flex items-center justify-center">
-                      🏺
+                    {/* Product Image */}
+                    <div className="w-16 h-16 bg-muted rounded-md flex items-center justify-center overflow-hidden">
+                      {item.product?.images?.[0] ? (
+                        <img 
+                          src={item.product.images[0]} 
+                          alt={item.product.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-2xl">🏺</span>
+                      )}
                     </div>
                     
                     {/* Product Info */}
@@ -132,7 +198,7 @@ const CartSidebar: React.FC<CartSidebarProps> = ({
                         size="icon"
                         className="w-8 h-8"
                         onClick={() => handleQuantityChange(item.productId, item.quantity - 1)}
-                        disabled={item.quantity <= 1}
+                        disabled={item.quantity <= 1 || isLoading}
                       >
                         <Minus className="w-3 h-3" />
                       </Button>
@@ -144,6 +210,7 @@ const CartSidebar: React.FC<CartSidebarProps> = ({
                         size="icon"
                         className="w-8 h-8"
                         onClick={() => handleQuantityChange(item.productId, item.quantity + 1)}
+                        disabled={isLoading}
                       >
                         <Plus className="w-3 h-3" />
                       </Button>
@@ -155,6 +222,7 @@ const CartSidebar: React.FC<CartSidebarProps> = ({
                       size="icon"
                       className="w-8 h-8 text-destructive hover:text-destructive"
                       onClick={() => handleRemoveItem(item.productId)}
+                      disabled={isLoading}
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -165,14 +233,25 @@ const CartSidebar: React.FC<CartSidebarProps> = ({
           </div>
 
           {/* Footer */}
-          {cart.length > 0 && (
+          {cart && cart.length > 0 && (
             <div className="border-t p-4 space-y-4">
               <div className="flex justify-between items-center text-lg font-semibold">
                 <span>Total:</span>
                 <span>₹{getTotal().toFixed(2)}</span>
               </div>
-              <Button className="w-full" size="lg">
-                Proceed to Checkout
+              <Button 
+                className="w-full" 
+                size="lg"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  'Proceed to Checkout'
+                )}
               </Button>
             </div>
           )}

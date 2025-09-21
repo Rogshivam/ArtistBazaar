@@ -1,10 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { MetricsCard } from "@/components/MetricsCard";
 import { AddProductDialog } from "@/components/AddProductDialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { useAuth } from "@/context/auth/AuthContext";
+import { apiService } from "@/api/api";
 import {
   DollarSign,
   Package,
@@ -19,84 +21,132 @@ import {
 
 // Define types for API responses
 interface Sale {
-  id: string;
+  _id: string;
   product: string;
   customer: string;
   status: "paid" | "shipped" | "pending";
-  amount: string;
+  amount: number;
+  createdAt: string;
 }
 
 interface Product {
+  _id: string;
   name: string;
+  price: number;
   sales: number;
-  revenue: string;
-  growth: number;
+  revenue: number;
+  stock: number;
+  status: string;
+  createdAt: string;
+}
+
+interface SellerStats {
+  totalRevenue: number;
+  totalProducts: number;
+  totalSales: number;
+  conversionRate: number;
 }
 
 export default function SellerDashboard() {
+  const { user } = useAuth();
   const [addProductOpen, setAddProductOpen] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [recentSales, setRecentSales] = useState<Sale[]>([]);
   const [topProducts, setTopProducts] = useState<Product[]>([]);
+  const [stats, setStats] = useState<SellerStats>({
+    totalRevenue: 0,
+    totalProducts: 0,
+    totalSales: 0,
+    conversionRate: 0
+  });
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch seller products
+      const productsData = await apiService.getSellerProducts() as any;
+      setProducts(productsData.items || []);
+
+      // Calculate stats from products
+      const totalRevenue = productsData.items?.reduce((sum: number, product: Product) => sum + (product.revenue || 0), 0) || 0;
+      const totalSales = productsData.items?.reduce((sum: number, product: Product) => sum + (product.sales || 0), 0) || 0;
+      const totalProducts = productsData.items?.length || 0;
+      const conversionRate = totalProducts > 0 ? (totalSales / totalProducts) * 100 : 0;
+
+      setStats({
+        totalRevenue,
+        totalProducts,
+        totalSales,
+        conversionRate
+      });
+
+      // Set top products (products with highest sales)
+      const sortedProducts = (productsData.items || [])
+        .sort((a: Product, b: Product) => (b.sales || 0) - (a.sales || 0))
+        .slice(0, 5);
+      setTopProducts(sortedProducts);
+
+      // Mock recent sales data (you can implement this in backend)
+      setRecentSales([
+        {
+          _id: "1",
+          product: "Hand-Painted Vase",
+          customer: "John Doe",
+          status: "paid",
+          amount: 1200,
+          createdAt: new Date().toISOString()
+        },
+        {
+          _id: "2", 
+          product: "Silver Earrings",
+          customer: "Jane Smith",
+          status: "shipped",
+          amount: 2500,
+          createdAt: new Date(Date.now() - 86400000).toISOString()
+        }
+      ]);
+
+      setError(null);
+    } catch (error: any) {
+      console.error("Fetch error:", error);
+      setError(error.message || "Failed to fetch data");
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const API_URL = import.meta.env.VITE_URL;
-        const token = localStorage.getItem("auth-token") || "";
-        console.log("API URL:", API_URL, "Token:", token ? "present" : "missing");
-
-        const productsRes = await fetch(`${API_URL}/api/seller/products`, {
-          headers: { "auth-token": token },
-        });
-        if (!productsRes.ok) throw new Error(`Products fetch failed: ${productsRes.status}`);
-        const productsJson = await productsRes.json();
-        setProducts(productsJson.items || []);
-
-        const salesRes = await fetch(`${API_URL}/api/seller/recent-sales`, {
-          headers: { "auth-token": token },
-        });
-        if (!salesRes.ok) throw new Error(`Sales fetch failed: ${salesRes.status}`);
-        const salesJson = await salesRes.json();
-        setRecentSales(salesJson.items || []);
-
-        const topRes = await fetch(`${API_URL}/api/seller/top-products`, {
-          headers: { "auth-token": token },
-        });
-        if (!topRes.ok) throw new Error(`Top products fetch failed: ${topRes.status}`);
-        const topJson = await topRes.json();
-        setTopProducts(topJson.items || []);
-
-        setError(null);
-      } catch (error) {
-        console.error("Fetch error:", error);
-        setError(error.message);
-        if (error.message.includes("401") || error.message.includes("Token expired")) {
-          localStorage.removeItem("auth-token");
-          window.location.href = "/login";
-        }
-      }
-    };
-
-    fetchData();
-  }, []);
+    if (user) {
+      fetchData();
+    }
+  }, [user, fetchData]);
 
   return (
     <div className="flex-1 space-y-6 p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Seller Dashboard</h1>
+          <h1 className="text-3xl font-bold text-foreground">Welcome back, {user?.name}!</h1>
           <p className="text-muted-foreground">Track your sales performance and manage your business.</p>
         </div>
-        <Button
-          onClick={() => setAddProductOpen(true)}
-          className="bg-gradient-to-r from-primary to-primary-glow hover:from-primary-glow hover:to-primary"
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Add Product
-        </Button>
+        {/* <Button
+  type="button"
+  variant="outline"
+  className="h-20 flex-col"
+  onClick={() => setAddProductOpen(true)}
+>
+  <Plus className="h-6 w-6 mb-2" />
+  Add Product
+</Button> */}
+<Button onClick={() => setAddProductOpen(true)}>
+  <Plus className="w-4 h-4 mr-2" />
+  Add Product
+</Button>
+
+
       </div>
 
       {/* Error Message */}
@@ -110,29 +160,29 @@ export default function SellerDashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <MetricsCard
           title="Total Revenue"
-          value="₹124.7K"
-          description="This month's earnings"
+          value={`₹${stats.totalRevenue.toLocaleString()}`}
+          description="Total earnings from sales"
           icon={DollarSign}
           trend={{ value: 15, isPositive: true }}
         />
         <MetricsCard
           title="Products Sold"
-          value="342"
-          description="Units sold this month"
+          value={stats.totalSales.toString()}
+          description="Total units sold"
           icon={Package}
           trend={{ value: 8, isPositive: true }}
         />
         <MetricsCard
-          title="Active Customers"
-          value="156"
-          description="Engaged Customer accounts"
+          title="Total Products"
+          value={stats.totalProducts.toString()}
+          description="Products in your catalog"
           icon={Users}
           trend={{ value: 12, isPositive: true }}
         />
         <MetricsCard
           title="Conversion Rate"
-          value="24.5%"
-          description="Quote to sale ratio"
+          value={`${stats.conversionRate.toFixed(1)}%`}
+          description="Sales per product ratio"
           icon={TrendingUp}
           trend={{ value: 3, isPositive: true }}
         />
@@ -148,10 +198,10 @@ export default function SellerDashboard() {
           <CardContent className="space-y-4">
             {recentSales.length > 0 ? (
               recentSales.map((sale) => (
-                <div key={sale.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                <div key={sale._id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
                   <div className="space-y-1">
                     <p className="font-medium text-sm">{sale.product}</p>
-                    <p className="text-xs text-muted-foreground">{sale.customer} • {sale.id}</p>
+                    <p className="text-xs text-muted-foreground">{sale.customer} • {sale._id}</p>
                   </div>
                   <div className="flex items-center gap-3">
                     <Badge
@@ -175,7 +225,7 @@ export default function SellerDashboard() {
                       {sale.status === "pending" && <AlertCircle className="w-3 h-3 mr-1" />}
                       {sale.status}
                     </Badge>
-                    <span className="font-semibold text-sm">{sale.amount}</span>
+                    <span className="font-semibold text-sm">₹{sale.amount.toLocaleString()}</span>
                   </div>
                 </div>
               ))
@@ -210,11 +260,11 @@ export default function SellerDashboard() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-semibold">{product.revenue}</p>
-                      <p className="text-xs text-success">+{product.growth}%</p>
+                      <p className="text-sm font-semibold">₹{product.revenue.toLocaleString()}</p>
+                      <p className="text-xs text-success">{product.sales} sales</p>
                     </div>
                   </div>
-                  <Progress value={product.growth * 2} className="h-1" />
+                  <Progress value={Math.min((product.sales / Math.max(...topProducts.map(p => p.sales))) * 100, 100)} className="h-1" />
                 </div>
               ))
             ) : (
@@ -256,7 +306,11 @@ export default function SellerDashboard() {
         </CardContent>
       </Card>
 
-      <AddProductDialog open={addProductOpen} onOpenChange={setAddProductOpen} />
+      <AddProductDialog
+        open={addProductOpen}
+        onOpenChange={setAddProductOpen}
+        onSuccess={() => fetchData()}
+      />
     </div>
   );
 }

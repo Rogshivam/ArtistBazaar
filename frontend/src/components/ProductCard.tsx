@@ -30,6 +30,7 @@ export function ProductCard({
   artisan,
   location,
   story,
+  image,
   description,
   materials = ["Clay", "Natural Glazes"],
   rating = 4,
@@ -99,7 +100,21 @@ export function ProductCard({
     >
       {/* Image Section */}
       <div className="aspect-square bg-gradient-subtle rounded-t-lg flex items-center justify-center text-6xl relative overflow-hidden">
-        🏺
+        {image ? (
+          <img
+            src={image}
+            alt={name}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              // Fallback to emoji if image fails to load
+              e.currentTarget.style.display = 'none';
+              e.currentTarget.nextElementSibling?.classList.remove('hidden');
+            }}
+          />
+        ) : null}
+        <div className={`w-full h-full flex items-center justify-center ${image ? 'hidden' : ''}`}>
+          🏺
+        </div>
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-300 flex items-center justify-center">
           <Button
             variant="secondary"

@@ -1,25 +1,3 @@
-// import mongoose from "mongoose";
-
-// const ProductSchema = new mongoose.Schema(
-//   {
-//     sellerId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-//     name: { type: String, required: true },
-//     description: { type: String, required: true },
-//     category: { type: String, required: true },
-//     price: { type: Number, required: true },
-//     sku: { type: String },
-//     stock: { type: Number, default: 0 },
-//     images: [{ type: String }],
-//     tags: [{ type: String }],
-//   },
-//   { timestamps: true }
-// );
-
-// ProductSchema.index({ name: "text", description: "text", category: "text", tags: "text" });
-
-// export default mongoose.model("Product", ProductSchema);
-
-// backend/src/models/Product.js
 import mongoose from "mongoose";
 
 const productSchema = new mongoose.Schema(
@@ -69,15 +47,32 @@ const productSchema = new mongoose.Schema(
       default: 0,
       min: [0, "Sales cannot be negative"],
     },
-    product: { type: mongoose.Schema.Types.ObjectId, ref: "Product", required: true },
-      buyer: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  status: { type: String, enum: ["paid", "shipped", "pending"], default: "pending" },
-  amount: Number,
-
     revenue: {
       type: Number,
       default: 0,
       min: [0, "Revenue cannot be negative"],
+    },
+    images: [{
+      type: String,
+      trim: true,
+    }],
+    // Cloudinary image data
+    imagesData: [{
+      publicId: String,
+      url: String,
+      width: Number,
+      height: Number,
+      format: String,
+      size: Number
+    }],
+    tags: [{
+      type: String,
+      trim: true,
+    }],
+    status: {
+      type: String,
+      enum: ["active", "inactive", "draft"],
+      default: "active",
     },
   },
   { timestamps: true }
@@ -85,6 +80,9 @@ const productSchema = new mongoose.Schema(
 
 // Index for faster queries by seller and name
 productSchema.index({ seller: 1, name: 1 });
+productSchema.index({ category: 1 });
+productSchema.index({ status: 1 });
+productSchema.index({ price: 1 });
 
 export default mongoose.model("Product", productSchema);
 

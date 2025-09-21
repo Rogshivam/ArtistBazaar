@@ -1,5 +1,6 @@
 // src/context/ProductContext.tsx
 import { createContext, useState, useEffect, useContext, ReactNode } from "react";
+import { apiService } from "@/api/api";
 
 interface ApiProduct {
   _id: string;
@@ -221,43 +222,19 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
   const fetchProducts = async (p = 1) => {
     setLoading(true);
     try {
-      let filteredProducts = initialProducts;
-      if (q) {
-        filteredProducts = filteredProducts.filter(
-          (product) =>
-            product.name.toLowerCase().includes(q.toLowerCase()) ||
-            product.description.toLowerCase().includes(q.toLowerCase())
-        );
-      }
-      if (category) {
-        filteredProducts = filteredProducts.filter(
-          (product) => product.category === category
-        );
-      }
-      if (tags.length) {
-        filteredProducts = filteredProducts.filter((product) =>
-          tags.every((tag) => product.tags?.includes(tag))
-        );
-      }
-      if (minPrice) {
-        filteredProducts = filteredProducts.filter(
-          (product) => product.price >= parseFloat(minPrice)
-        );
-      }
-      if (maxPrice) {
-        filteredProducts = filteredProducts.filter(
-          (product) => product.price <= parseFloat(maxPrice)
-        );
-      }
-      const itemsPerPage = 24;
-      const startIndex = (p - 1) * itemsPerPage;
-      const paginatedProducts = filteredProducts.slice(
-        startIndex,
-        startIndex + itemsPerPage
-      );
-      setProducts(paginatedProducts);
-      setPage(p);
-      setPages(Math.ceil(filteredProducts.length / itemsPerPage));
+      const data = await apiService.getProducts({
+        page: p.toString(),
+        limit: "24",
+        ...(q && { q }),
+        ...(category && { category }),
+        ...(tags.length > 0 && { tags: tags.join(",") }),
+        ...(minPrice && { minPrice }),
+        ...(maxPrice && { maxPrice }),
+      });
+      
+      setProducts(data.items || []);
+      setPage(data.page || p);
+      setPages(data.pages || 1);
     } catch (error) {
       console.error("Error fetching products:", error);
       setProducts([]);

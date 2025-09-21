@@ -71,6 +71,7 @@ const Navbar: React.FC = () => {
   const navLinks: NavLink[] = [
     { name: 'Home', path: '/', isHash: true },
     { name: 'Products', path: '/products' },
+    { name: 'Artisans', path: '/artisans' },
     { name: 'About', path: '/about', isHash: true },
     ...(user ? [{ name: 'Chat', path: '/chat' }] : []),
   ];

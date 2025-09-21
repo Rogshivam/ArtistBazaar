@@ -14,12 +14,12 @@ async function ensureCart(userId) {
   return cart;
 }
 
-r.get("/cart", requireAuth(), async (req, res) => {
+r.get("/", requireAuth(), async (req, res) => {
   const cart = await ensureCart(req.user.id);
   return res.json(cart);
 });
 
-r.post("/cart/add", requireAuth(), async (req, res) => {
+r.post("/add", requireAuth(), async (req, res) => {
   try {
     const { productId, quantity } = addSchema.parse(req.body);
     const product = await Product.findById(productId);
@@ -38,7 +38,7 @@ r.post("/cart/add", requireAuth(), async (req, res) => {
   }
 });
 
-r.post("/cart/update", requireAuth(), async (req, res) => {
+r.post("/update", requireAuth(), async (req, res) => {
   try {
     const { productId, quantity } = addSchema.parse(req.body);
     const cart = await ensureCart(req.user.id);
@@ -56,7 +56,7 @@ r.post("/cart/update", requireAuth(), async (req, res) => {
   }
 });
 
-r.post("/cart/clear", requireAuth(), async (req, res) => {
+r.post("/clear", requireAuth(), async (req, res) => {
   const cart = await ensureCart(req.user.id);
   cart.items = [];
   await cart.save();

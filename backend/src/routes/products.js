@@ -5,26 +5,37 @@ import { requireAuth } from "../utils/auth.js";
 
 const r = Router();
 
-r.get("/products", async (req, res) => {
-  const { q, category, tags, minPrice, maxPrice, sort = "-createdAt", page = "1", limit = "20" } = req.query;
-  const filter = {};
-  if (q) filter.$text = { $search: String(q) };
-  if (category) filter.category = String(category);
-  if (tags) filter.tags = { $in: String(tags).split(",") };
-  if (minPrice || maxPrice) filter.price = {
-    ...(minPrice ? { $gte: Number(minPrice) } : {}),
-    ...(maxPrice ? { $lte: Number(maxPrice) } : {}),
-  };
+r.get("/", async (req, res) => {
+  try {
+    const { q, category, tags, minPrice, maxPrice, sort = "-createdAt", page = "1", limit = "20" } = req.query;
+    const filter = { status: "active" }; // Only show active products
+    
+    if (q) {
+      filter.$or = [
+        { name: { $regex: q, $options: "i" } },
+        { description: { $regex: q, $options: "i" } },
+        { tags: { $in: [new RegExp(q, "i")] } }
+      ];
+    }
+    if (category) filter.category = String(category);
+    if (tags) filter.tags = { $in: String(tags).split(",") };
+    if (minPrice || maxPrice) filter.price = {
+      ...(minPrice ? { $gte: Number(minPrice) } : {}),
+      ...(maxPrice ? { $lte: Number(maxPrice) } : {}),
+    };
 
-  const pageNum = Math.max(1, parseInt(String(page)) || 1);
-  const limitNum = Math.max(1, Math.min(100, parseInt(String(limit)) || 20));
-  const skip = (pageNum - 1) * limitNum;
+    const pageNum = Math.max(1, parseInt(String(page)) || 1);
+    const limitNum = Math.max(1, Math.min(100, parseInt(String(limit)) || 20));
+    const skip = (pageNum - 1) * limitNum;
 
-  const [items, total] = await Promise.all([
-    Product.find(filter).sort(String(sort)).skip(skip).limit(limitNum),
-    Product.countDocuments(filter),
-  ]);
-  return res.json({ items, total, page: pageNum, pages: Math.ceil(total / limitNum) });
+    const [items, total] = await Promise.all([
+      Product.find(filter).populate('seller', 'name email').sort(String(sort)).skip(skip).limit(limitNum),
+      Product.countDocuments(filter),
+    ]);
+    return res.json({ items, total, page: pageNum, pages: Math.ceil(total / limitNum) });
+  } catch (error) {
+    return res.status(500).json({ message: "Error fetching products", error: error.message });
+  }
 });
 
 const createSchema = z.object({
@@ -38,10 +49,10 @@ const createSchema = z.object({
   tags: z.array(z.string()).optional(),
 });
 
-r.post("/products", requireAuth(["Seller"]), async (req, res) => {
+r.post("/", requireAuth(["Seller"]), async (req, res) => {
   try {
     const data = createSchema.parse(req.body);
-    const doc = await Product.create({ ...data, sellerId: req.user.id });
+    const doc = await Product.create({ ...data, seller: req.user.id });
     return res.status(201).json({ message: "Product created", product: doc });
   } catch (e) {
     return res.status(400).json({ message: e.message || "Invalid product" });
@@ -49,8 +60,70 @@ r.post("/products", requireAuth(["Seller"]), async (req, res) => {
 });
 
 r.get("/seller/products", requireAuth(["Seller"]), async (req, res) => {
-  const items = await Product.find({ sellerId: req.user.id }).sort({ createdAt: -1 });
-  return res.json({ items });
+  try {
+    const items = await Product.find({ seller: req.user.id }).sort({ createdAt: -1 });
+    return res.json({ items });
+  } catch (error) {
+    return res.status(500).json({ message: "Error fetching seller products", error: error.message });
+  }
+});
+
+// Get single product by ID
+r.get("/:id", async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id).populate('seller', 'name email avatar');
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+    return res.json({ product });
+  } catch (error) {
+    return res.status(500).json({ message: "Error fetching product", error: error.message });
+  }
+});
+
+// Update product
+r.put("/:id", requireAuth(["Seller"]), async (req, res) => {
+  try {
+    const product = await Product.findOne({ _id: req.params.id, seller: req.user.id });
+    if (!product) {
+      return res.status(404).json({ message: "Product not found or unauthorized" });
+    }
+    
+    const data = createSchema.parse(req.body);
+    const updatedProduct = await Product.findByIdAndUpdate(
+      req.params.id, 
+      data, 
+      { new: true, runValidators: true }
+    );
+    return res.json({ message: "Product updated", product: updatedProduct });
+  } catch (error) {
+    return res.status(400).json({ message: error.message || "Error updating product" });
+  }
+});
+
+// Delete product
+r.delete("/:id", requireAuth(["Seller"]), async (req, res) => {
+  try {
+    const product = await Product.findOne({ _id: req.params.id, seller: req.user.id });
+    if (!product) {
+      return res.status(404).json({ message: "Product not found or unauthorized" });
+    }
+    
+    await Product.findByIdAndDelete(req.params.id);
+    return res.json({ message: "Product deleted successfully" });
+  } catch (error) {
+    return res.status(500).json({ message: "Error deleting product", error: error.message });
+  }
+});
+
+// Get categories
+r.get("/categories", async (req, res) => {
+  try {
+    const categories = await Product.distinct("category");
+    return res.json({ categories });
+  } catch (error) {
+    return res.status(500).json({ message: "Error fetching categories", error: error.message });
+  }
 });
 
 export default r;

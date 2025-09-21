@@ -14,13 +14,15 @@ import {
 } from "@/components/ui/dialog";
 import { Upload, X, Image as ImageIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { apiService } from "@/api/api";
 
 interface AddProductDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSuccess?: (product: any) => void;
 }
 
-export function AddProductDialog({ open, onOpenChange }: AddProductDialogProps) {
+export function AddProductDialog({ open, onOpenChange, onSuccess }: AddProductDialogProps) {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -65,33 +67,31 @@ export function AddProductDialog({ open, onOpenChange }: AddProductDialogProps) 
     }
 
     try {
-      const API_URL = import.meta.env.VITE_URL as string;
-      const authToken = localStorage.getItem("auth-token") || "";
+      // 1) Upload images to backend (Cloudinary) to get URLs
+      let imageUrls: string[] = [];
+      if (images.length > 0) {
+        const uploadRes = await apiService.uploadImages(images as any);
+        const uploaded = (uploadRes as any).images || [];
+        imageUrls = uploaded.map((img: any) => img.url).filter(Boolean);
+      }
+
+      // 2) Build payload for product creation
       const payload = {
         ...formData,
         price: Number(formData.price),
         stock: formData.stock ? Number(formData.stock) : 0,
         tags: formData.tags ? formData.tags.split(',').map(s => s.trim()).filter(Boolean) : [],
-        images: images.map(f => f.name),
+        images: imageUrls, // backend createSchema expects array of strings
       } as any;
 
-      const resp = await fetch(`${API_URL}/api/products`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "auth-token": authToken,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const result = await resp.json();
-      if (!resp.ok) throw new Error(result.message || "Failed to add product");
+      const result = await apiService.createProduct(payload);
 
       toast({
         title: "Product added successfully!",
         description: `${formData.name} has been added to your catalog`,
       });
 
+      // inside handleSubmit success
       setFormData({
         name: "",
         description: "",
@@ -99,9 +99,14 @@ export function AddProductDialog({ open, onOpenChange }: AddProductDialogProps) 
         price: "",
         sku: "",
         stock: "",
+        tags: "", // keep tags so form stays stable
       });
       setImages([]);
       onOpenChange(false);
+
+      // Notify parent to refresh data
+      const createdProduct = (result as any).product ?? result;
+      if (onSuccess) onSuccess(createdProduct);
     } catch (err: any) {
       toast({ title: "Error", description: err.message || "Failed", variant: "destructive" });
     }
@@ -139,12 +144,10 @@ export function AddProductDialog({ open, onOpenChange }: AddProductDialogProps) 
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="industrial">Industrial Equipment</SelectItem>
-                  <SelectItem value="automation">Automation Systems</SelectItem>
-                  <SelectItem value="safety">Safety Equipment</SelectItem>
-                  <SelectItem value="electronics">Electronics</SelectItem>
-                  <SelectItem value="materials">Raw Materials</SelectItem>
-                  <SelectItem value="tools">Tools & Hardware</SelectItem>
+                  <SelectItem value="Painting">Painting</SelectItem>
+                  <SelectItem value="Sculpture">Sculpture</SelectItem>
+                  <SelectItem value="Craft">Craft</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
                 </SelectContent>
               </Select>
             </div>
