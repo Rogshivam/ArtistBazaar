@@ -270,7 +270,10 @@ export default function SellerDashboard() {
             ) : (
               <p className="text-muted-foreground text-center">No top products available.</p>
             )}
-            <Button variant="outline" className="w-full mt-4">
+            <Button variant="outline" className="w-full mt-4" onClick={() => {
+              const sellerId = localStorage.getItem('sellerId') || '';
+              if (sellerId) window.location.href = `/seller/${sellerId}/products`;
+            }}>
               <Package className="mr-2 h-4 w-4" />
               Manage Products
             </Button>

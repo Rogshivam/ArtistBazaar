@@ -31,6 +31,7 @@ import CustomerDashboard from "@/components/PanelLout/CustomerDashboard";
 import SellerAnalytics from "@/components/PanelLout/SellerAnalytics";
 import SellerSettings from "@/components/PanelLout/SellerSettings";
 import SellerAbout from "@/components/PanelLout/SellerAbout";
+import SellerProducts from "@/pages/SellerProducts";
 import CustomerSettings from "@/components/PanelLout/CustomerSettings";
 import AdminAnalytics from "@/components/Admin/AdminAnalytics";
 import Overview from "@/components/Admin/Overview";
@@ -84,6 +85,7 @@ const App = () => (
                     <Route path="settings" element={<SellerSettings />} />
                     <Route path="analytics" element={<SellerAnalytics />} />
                     <Route path="services" element={<Services />} />
+                    <Route path="products" element={<SellerProducts />} />
                   </Route>
                   <Route
                     path="/customer/:id"
