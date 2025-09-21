@@ -395,7 +395,7 @@ const Index = () => {
 
         {/* Browse all */}
         <div className="text-center mt-4 mb-7">
-          <Link to="/artists" className="text-blue-600 underline">Browse all Artisan →</Link>
+          <Link to="/artisans" className="text-blue-600 underline">Browse all Artisan →</Link>
         </div>
       </div>
 
