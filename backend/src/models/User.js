@@ -106,7 +106,6 @@ const userSchema = new mongoose.Schema({
 });
 
 // Index for efficient queries
-userSchema.index({ email: 1 });
 userSchema.index({ name: 1 });
 
 // Pre-save hook for password hashing (if modified)

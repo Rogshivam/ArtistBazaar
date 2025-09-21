@@ -26,7 +26,13 @@ export function requireAuth(roles) {
       if (roles && !roles.includes(user.role)) return res.status(403).json({ message: "Forbidden" });
       req.user = user;
       next();
-    } catch {
+    } catch (err) {
+      if (err && err.name === "TokenExpiredError") {
+        return res.status(401).json({ message: "Token expired, please log in again" });
+      }
+      if (err && err.name === "JsonWebTokenError") {
+        return res.status(401).json({ message: "Invalid token signature" });
+      }
       return res.status(401).json({ message: "Invalid token" });
     }
   };

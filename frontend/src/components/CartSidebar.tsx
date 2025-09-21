@@ -37,6 +37,9 @@ const CartSidebar: React.FC<CartSidebarProps> = ({
     refreshCart 
   } = useCart();
 
+  const formatPrice = (v: number) =>
+    new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 }).format(v);
+
   const handleQuantityChange = async (productId: string, newQuantity: number) => {
     try {
       await updateCartQuantity(productId, newQuantity);
@@ -119,7 +122,7 @@ const CartSidebar: React.FC<CartSidebarProps> = ({
               >
                 <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
               </Button>
-              <Button variant="ghost" size="icon" onClick={onClose}>
+              <Button variant="ghost" size="icon" onClick={onClose} disabled={isLoading}>
                 <X className="w-4 h-4" />
               </Button>
             </div>
@@ -137,6 +140,7 @@ const CartSidebar: React.FC<CartSidebarProps> = ({
                     size="sm" 
                     className="ml-2"
                     onClick={handleRefresh}
+                    disabled={isLoading}
                   >
                     Retry
                   </Button>
@@ -175,6 +179,7 @@ const CartSidebar: React.FC<CartSidebarProps> = ({
                           src={item.product.images[0]} 
                           alt={item.product.name}
                           className="w-full h-full object-cover"
+                          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
                         />
                       ) : (
                         <span className="text-2xl">🏺</span>
@@ -186,9 +191,12 @@ const CartSidebar: React.FC<CartSidebarProps> = ({
                       <h4 className="font-medium text-sm truncate">
                         {item.product?.name || 'Product'}
                       </h4>
-                      <p className="text-sm text-muted-foreground">
-                        ₹{item.priceSnapshot}
-                      </p>
+                      <div className="text-xs text-muted-foreground">
+                        Price: {formatPrice(item.priceSnapshot)}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Subtotal: {formatPrice(item.priceSnapshot * item.quantity)}
+                      </div>
                     </div>
 
                     {/* Quantity Controls */}
@@ -237,7 +245,7 @@ const CartSidebar: React.FC<CartSidebarProps> = ({
             <div className="border-t p-4 space-y-4">
               <div className="flex justify-between items-center text-lg font-semibold">
                 <span>Total:</span>
-                <span>₹{getTotal().toFixed(2)}</span>
+                <span>{formatPrice(getTotal())}</span>
               </div>
               <Button 
                 className="w-full" 

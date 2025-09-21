@@ -8,6 +8,31 @@ class ApiService {
     } as Record<string, string>;
   }
 
+  private async tryRefreshToken(): Promise<boolean> {
+    const refreshToken = localStorage.getItem('refresh-token');
+    if (!refreshToken) return false;
+
+    try {
+      const res = await fetch(`${API_URL}/api/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken }),
+      });
+
+      if (!res.ok) return false;
+      const data = await res.json();
+      if (data?.authToken && data?.refreshToken) {
+        localStorage.setItem('auth-token', data.authToken);
+        localStorage.setItem('refresh-token', data.refreshToken);
+        if (data.user) localStorage.setItem('user-data', JSON.stringify(data.user));
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  }
+
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${API_URL}${endpoint}`;
     const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
@@ -22,8 +47,25 @@ class ApiService {
       },
     };
 
-    const response = await fetch(url, config);
-    
+    let response = await fetch(url, config);
+
+    // If unauthorized, attempt a token refresh once and retry
+    if (response.status === 401) {
+      const refreshed = await this.tryRefreshToken();
+      if (refreshed) {
+        const retryHeaders = this.getAuthHeaders();
+        const retryConfig: RequestInit = {
+          ...options,
+          headers: {
+            ...contentTypeHeader,
+            ...retryHeaders,
+            ...options.headers,
+          },
+        };
+        response = await fetch(url, retryConfig);
+      }
+    }
+
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
