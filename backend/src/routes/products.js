@@ -5,10 +5,15 @@ import { requireAuth } from "../utils/auth.js";
 
 function normalizeImages(p) {
   if (!p) return [];
-  if (Array.isArray(p.images) && p.images.length) return p.images;
-  if (Array.isArray(p.imagesData) && p.imagesData.length) return p.imagesData.map((x) => x?.url).filter(Boolean);
-  if (p.image) return [p.image];
-  return [];
+  // Prefer explicit primary image (`image`) as the first element if available
+  const fromImages = Array.isArray(p.images) && p.images.length ? [...p.images] : [];
+  const fromImagesData = Array.isArray(p.imagesData) && p.imagesData.length ? p.imagesData.map((x) => x?.url).filter(Boolean) : [];
+  let out = fromImages.length ? fromImages : (fromImagesData.length ? fromImagesData : (p.image ? [p.image] : []));
+  if (p.image) {
+    // If `image` exists but is not the first element, move it to the front
+    out = [p.image, ...out.filter((u) => u && u !== p.image)];
+  }
+  return out;
 }
 
 const r = Router();
@@ -59,6 +64,7 @@ const createSchema = z.object({
   price: z.coerce.number().positive(),
   sku: z.string().optional(),
   stock: z.coerce.number().int().nonnegative().optional(),
+  image: z.string().url().optional(),
   images: z.array(z.string()).optional(),
   tags: z.array(z.string()).optional(),
 });
@@ -66,7 +72,11 @@ const createSchema = z.object({
 r.post("/", requireAuth(["Seller"]), async (req, res) => {
   try {
     const data = createSchema.parse(req.body);
-    const doc = await Product.create({ ...data, seller: req.user.id });
+    const payload = { ...data, seller: req.user.id };
+    if ((!payload.image || !payload.image.length) && Array.isArray(payload.images) && payload.images.length) {
+      payload.image = payload.images[0];
+    }
+    const doc = await Product.create(payload);
     return res.status(201).json({ message: "Product created", product: doc });
   } catch (e) {
     return res.status(400).json({ message: e.message || "Invalid product" });
@@ -105,9 +115,13 @@ r.put("/:id", requireAuth(["Seller"]), async (req, res) => {
     }
     
     const data = createSchema.parse(req.body);
+    const payload = { ...data };
+    if ((!payload.image || !payload.image.length) && Array.isArray(payload.images) && payload.images.length) {
+      payload.image = payload.images[0];
+    }
     const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id, 
-      data, 
+      payload, 
       { new: true, runValidators: true }
     );
     return res.json({ message: "Product updated", product: updatedProduct });

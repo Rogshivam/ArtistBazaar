@@ -107,6 +107,7 @@ export function AddProductDialog({ open, onOpenChange, onSuccess }: AddProductDi
         price: Number(formData.price),
         stock: formData.stock ? Number(formData.stock) : 0,
         tags: formData.tags ? formData.tags.split(',').map(s => s.trim()).filter(Boolean) : [],
+        image: imageUrls[0], // associate primary image explicitly
         images: imageUrls, // backend createSchema expects array of strings
       } as any;
 
