@@ -6,13 +6,22 @@ import { upload } from "../utils/cloudinary.js";
 
 const r = Router();
 
+// Helpers to accept empty or add protocol for URLs
+const urlOptional = z.preprocess((val) => {
+  if (typeof val !== 'string') return val;
+  const s = val.trim();
+  if (s === '') return undefined; // treat empty string as undefined
+  const withProto = /^https?:\/\//i.test(s) ? s : `https://${s}`;
+  return withProto;
+}, z.string().url().max(200)).optional();
+
 // Profile update schema
 const profileUpdateSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   bio: z.string().max(500).optional(),
   location: z.string().max(100).optional(),
   phone: z.string().max(20).optional(),
-  website: z.string().url().max(200).optional(),
+  website: urlOptional,
   socialMedia: z.object({
     instagram: z.string().max(100).optional(),
     facebook: z.string().max(100).optional(),

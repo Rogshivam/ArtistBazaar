@@ -38,7 +38,7 @@ class ApiService {
     const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
     const baseHeaders: Record<string, string> = this.getAuthHeaders();
     const contentTypeHeader = !isFormData ? { 'Content-Type': 'application/json' } : {};
-    const config: RequestInit = {
+    let config: RequestInit = {
       ...options,
       headers: {
         ...contentTypeHeader,
@@ -47,31 +47,46 @@ class ApiService {
       },
     };
 
-    let response = await fetch(url, config);
+    const maxRetries = 3;
+    let attempt = 0;
+    while (true) {
+      let response = await fetch(url, config);
 
-    // If unauthorized, attempt a token refresh once and retry
-    if (response.status === 401) {
-      const refreshed = await this.tryRefreshToken();
-      if (refreshed) {
-        const retryHeaders = this.getAuthHeaders();
-        const retryConfig: RequestInit = {
-          ...options,
-          headers: {
-            ...contentTypeHeader,
-            ...retryHeaders,
-            ...options.headers,
-          },
-        };
-        response = await fetch(url, retryConfig);
+      // 401: try token refresh once per request cycle
+      if (response.status === 401) {
+        const refreshed = await this.tryRefreshToken();
+        if (refreshed) {
+          const retryHeaders = this.getAuthHeaders();
+          config = {
+            ...options,
+            headers: {
+              ...contentTypeHeader,
+              ...retryHeaders,
+              ...options.headers,
+            },
+          };
+          response = await fetch(url, config);
+        }
       }
-    }
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-    }
+      // 429: retry with backoff and Retry-After
+      if (response.status === 429 && attempt < maxRetries) {
+        attempt++;
+        const retryAfter = response.headers.get('Retry-After');
+        let delayMs = retryAfter ? Number(retryAfter) * 1000 : 500 * Math.pow(2, attempt - 1);
+        // Cap delay
+        delayMs = Math.min(delayMs, 4000);
+        await new Promise((res) => setTimeout(res, delayMs));
+        continue;
+      }
 
-    return response.json();
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+
+      return response.json();
+    }
   }
 
   // Auth endpoints
@@ -136,6 +151,39 @@ class ApiService {
   async deleteProduct(id: string) {
     return this.request(`/api/products/${id}`, {
       method: 'DELETE',
+    });
+  }
+
+  // Chats
+  async getConversations() {
+    return this.request('/api/chats/conversations');
+  }
+
+  async startConversation(userId: string) {
+    return this.request('/api/chats/conversations/start', {
+      method: 'POST',
+      body: JSON.stringify({ userId }),
+    });
+  }
+
+  async getMessages(conversationId: string, params: { limit?: string; before?: string } = {}) {
+    const sp = new URLSearchParams();
+    Object.entries(params).forEach(([k, v]) => v && sp.append(k, v));
+    const qs = sp.toString();
+    const suffix = qs ? `?${qs}` : '';
+    return this.request(`/api/chats/conversations/${conversationId}/messages${suffix}`);
+  }
+
+  async sendMessage(conversationId: string, text: string) {
+    return this.request(`/api/chats/conversations/${conversationId}/messages`, {
+      method: 'POST',
+      body: JSON.stringify({ text }),
+    });
+  }
+
+  async markRead(conversationId: string) {
+    return this.request(`/api/chats/conversations/${conversationId}/read`, {
+      method: 'POST',
     });
   }
 

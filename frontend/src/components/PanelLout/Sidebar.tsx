@@ -9,7 +9,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Store,
-  Users
+  Users,
+  MessageSquare
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,7 @@ const sellerNavigation = [
   { name: "Dashboard", href: "dashboard", icon: LayoutDashboard },
   { name: "About", href: "about", icon: User },
   { name: "Services", href: "services", icon: Package },
+  { name: "Chats", href: "chats", icon: MessageSquare },
   { name: "Analytics", href: "analytics", icon: BarChart3 },
   { name: "Settings", href: "settings", icon: Settings },
 ];

@@ -54,15 +54,17 @@ export default function Artisans() {
   const fetchArtisans = async () => {
     setLoading(true);
     try {
-      const result = await apiService.getSellersList({
+      const result: any = await apiService.getSellersList({
         page: "1",
         limit: "50",
         search: searchQuery,
         location: selectedRole === "Services" ? "" : undefined
       });
       
-      if (result.success) {
-        setArtisans(result.sellers || []);
+      if (result?.success) {
+        setArtisans(result?.sellers || []);
+      } else {
+        setArtisans(result?.sellers || []);
       }
     } catch (error) {
       console.error("Error fetching artisans:", error);
@@ -72,7 +74,10 @@ export default function Artisans() {
   };
 
   useEffect(() => {
-    fetchArtisans();
+    const t = setTimeout(() => {
+      fetchArtisans();
+    }, 400);
+    return () => clearTimeout(t);
   }, [searchQuery, selectedRole, sortBy]);
 
   const filteredArtisans = useMemo(() => {

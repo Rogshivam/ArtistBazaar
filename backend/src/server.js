@@ -1,4 +1,6 @@
 import express from "express";
+import http from "http";
+import { Server as SocketIOServer } from "socket.io";
 import cors from "cors";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
@@ -13,11 +15,30 @@ import wishlistRoutes from "./routes/wishlist.js";
 import artisanRoutes from "./routes/artisans.js";
 import uploadRoutes from "./routes/upload.js";
 import profileRoutes from "./routes/profile.js";
+import chatsRoutes from "./routes/chats.js";
+import { cacheGet } from "./utils/cache.js";
 
 // Load environment variables
 dotenv.config();
 
 const app = express();
+const server = http.createServer(app);
+const io = new SocketIOServer(server, {
+  cors: {
+    origin: process.env.CORS_ORIGIN || "http://localhost:5173",
+    credentials: true,
+  },
+});
+app.set("io", io);
+
+io.on("connection", (socket) => {
+  socket.on("conversation:join", (conversationId) => {
+    if (conversationId) socket.join(`conversation:${conversationId}`);
+  });
+  socket.on("conversation:leave", (conversationId) => {
+    if (conversationId) socket.leave(`conversation:${conversationId}`);
+  });
+});
 
 // Security middleware
 app.use(helmet({
@@ -31,14 +52,6 @@ app.use(helmet({
   },
 }));
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
-  message: "Too many requests from this IP, please try again later.",
-  standardHeaders: true,
-  legacyHeaders: false,
-});
 
 // Auth rate limiting (stricter)
 const authLimiter = rateLimit({
@@ -49,7 +62,7 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-app.use(limiter);
+// Note: Do not apply a global limiter to avoid 429s on normal browsing.
 
 // CORS configuration
 const corsOrigin = process.env.CORS_ORIGIN || "http://localhost:5173";
@@ -70,14 +83,16 @@ app.get("/health", (_req, res) => res.json({ ok: true }));
 
 // Mount routes with distinct prefixes
 app.use("/api/auth", authLimiter, authRoutes);
-app.use("/api/products", productRoutes);
+// Apply lightweight cache to common list endpoints
+app.use("/api/products", cacheGet(30), productRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/seller", sellerRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api", wishlistRoutes);
-app.use("/api", artisanRoutes);
+app.use("/api", cacheGet(30), artisanRoutes);
+app.use("/api/chats", chatsRoutes);
 
 // Error handling for unmatched routes
 app.use((req, res) => {
@@ -89,7 +104,7 @@ mongoose
   .connect(mongo)
   .then(() => {
     const port = Number(process.env.PORT) || 4000;
-    app.listen(port, () => console.log(`API listening on http://localhost:${port}`));
+    server.listen(port, () => console.log(`API listening on http://localhost:${port}`));
   })
   .catch((err) => {
     console.error("Mongo connection error:", err);

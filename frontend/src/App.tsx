@@ -34,6 +34,8 @@ import SellerSettings from "@/components/PanelLout/SellerSettings";
 import SellerAbout from "@/components/PanelLout/SellerAbout";
 import SellerProducts from "@/pages/SellerProducts";
 import CustomerSettings from "@/components/PanelLout/CustomerSettings";
+import SellerChats from "@/components/PanelLout/SellerChats";
+import SellerChatThread from "@/components/PanelLout/SellerChatThread";
 import AdminAnalytics from "@/components/Admin/AdminAnalytics";
 import Overview from "@/components/Admin/Overview";
 import DataEntity from "@/components/Admin/DataEntity";
@@ -45,6 +47,7 @@ import About from "./pages/About";
 // import GoogleCallback from "@/components/GoogleCallback"; // New component for handling Google OAuth callback
 import { Layout } from "./components/PanelLout/Layout";
 import { AuthProvider } from "@/context/auth/AuthContext";
+import ChatThread from "@/pages/ChatThread";
 // import LoadingState from "./context/loading/LoadingState"; // if you also use loading context
 
 const queryClient = new QueryClient();
@@ -65,7 +68,7 @@ const App = () => (
                   <Route path="/products" element={<Products />} />
                   <Route path="/artisans" element={<Artisans />} />
                   <Route path="/profile/:id" element={<ProfileView />} />
-                  <Route path="/chat/:id" element={<DirectChat />} />
+                  <Route path="/chat/:id" element={<ProtectedRoute roles={["Customer", "Seller", "Services", "Admin"]}><DirectChat /></ProtectedRoute>} />
                   <Route path="/chat" element={<ProtectedRoute roles={["Customer", "Seller", "Services", "Admin"]}><Chat /></ProtectedRoute>} />
                   {/* <Route path="/seller/:id" element={<ProtectedRoute roles={["Seller"]}><SellerPage /></ProtectedRoute>}><Route path="about" element={<About />} /><Route path="/settings" element={<Settings />} /><Route path="/analytics" element={<Analytics />} /></Route> */}
                   {/* <Route path="/seller/:id" element={<ProtectedRoute roles={["Seller"]}><SellerPage /></ProtectedRoute>} /> */}
@@ -87,6 +90,8 @@ const App = () => (
                     <Route path="analytics" element={<SellerAnalytics />} />
                     <Route path="services" element={<Services />} />
                     <Route path="products" element={<SellerProducts />} />
+                    <Route path="chats" element={<SellerChats />} />
+                    <Route path="chats/:conversationId" element={<SellerChatThread />} />
                   </Route>
                   <Route
                     path="/customer/:id"
@@ -134,6 +139,7 @@ const App = () => (
                     <Route path="settings" element={<div className="p-6">Settings coming soon...</div>} />
                   </Route>
                   <Route path="about" element={<About />} />
+                  <Route path="/chat/thread/:conversationId" element={<ProtectedRoute roles={["Customer", "Seller", "Services", "Admin"]}><ChatThread /></ProtectedRoute>} />
                   {/* <Route path="/google-callback" element={<GoogleCallback />} /> */}
                   <Route path="/login" element={<Login />} />
                   <Route path="/signup" element={<Signup />} />

@@ -42,6 +42,7 @@ export default function SellerDashboard() {
   const [addProductOpen, setAddProductOpen] = useState(false);
 
   const [loading, setLoading] = useState(true);
+  const [unreadChats, setUnreadChats] = useState(0);
 
   const fetchSellerData = useCallback(async () => {
       try {
@@ -84,6 +85,15 @@ export default function SellerDashboard() {
   useEffect(() => {
     if (user) {
       fetchSellerData();
+      // Load unread chats count
+      (async () => {
+        try {
+          const res: any = await apiService.getConversations();
+          const meId = user?.id || (user as any)?._id;
+          const count = (res?.conversations || []).reduce((acc: number, c: any) => acc + (c.unread || 0), 0);
+          setUnreadChats(count);
+        } catch {}
+      })();
     }
   }, [user, fetchSellerData]);
 
@@ -277,6 +287,17 @@ export default function SellerDashboard() {
               <Link to={`/seller/${user?.id}/analytics`}>
                 <BarChart3 className="w-8 h-8 mb-2" />
                 <span className="font-medium">Analytics</span>
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="flex flex-col items-center p-4 h-auto relative">
+              <Link to={`/seller/${user?.id}/chats`}>
+                <Users className="w-8 h-8 mb-2" />
+                <span className="font-medium">Chats</span>
+                {unreadChats > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full px-2 py-0.5">
+                    {unreadChats}
+                  </span>
+                )}
               </Link>
             </Button>
             <Button asChild variant="outline" className="flex flex-col items-center p-4 h-auto">
