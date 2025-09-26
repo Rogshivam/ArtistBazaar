@@ -25,6 +25,51 @@ const profileUpdateSchema = z.object({
   awards: z.array(z.string().max(200)).optional()
 });
 
+// Upload shop banner/cover image
+r.post("/banner", requireAuth(), upload.single('banner'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No image file provided" });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Delete old banner if exists
+    if (user.shopBannerData && user.shopBannerData.publicId) {
+      try {
+        const { deleteImage } = await import("../utils/cloudinary.js");
+        await deleteImage(user.shopBannerData.publicId);
+      } catch (deleteError) {
+        console.error("Error deleting old banner:", deleteError);
+      }
+    }
+
+    user.shopBanner = req.file.secure_url;
+    user.shopBannerData = {
+      publicId: req.file.public_id,
+      url: req.file.secure_url,
+      width: req.file.width,
+      height: req.file.height,
+      format: req.file.format
+    };
+
+    await user.save();
+
+    res.json({
+      success: true,
+      message: "Banner updated successfully",
+      shopBanner: user.shopBanner,
+      shopBannerData: user.shopBannerData
+    });
+  } catch (error) {
+    console.error("Banner upload error:", error);
+    res.status(500).json({ message: "Failed to upload banner" });
+  }
+});
+
 // Get user profile
 r.get("/", requireAuth(), async (req, res) => {
   try {
@@ -52,6 +97,11 @@ r.get("/", requireAuth(), async (req, res) => {
         education: user.education,
         achievements: user.achievements,
         awards: user.awards,
+        isVerifiedSeller: user.isVerifiedSeller,
+        responseRate: user.responseRate,
+        responseTimeMinutesAvg: user.responseTimeMinutesAvg,
+        shopBanner: user.shopBanner,
+        shopBannerData: user.shopBannerData,
         avatarData: user.avatarData,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt
@@ -101,6 +151,11 @@ r.put("/", requireAuth(), async (req, res) => {
         education: user.education,
         achievements: user.achievements,
         awards: user.awards,
+        isVerifiedSeller: user.isVerifiedSeller,
+        responseRate: user.responseRate,
+        responseTimeMinutesAvg: user.responseTimeMinutesAvg,
+        shopBanner: user.shopBanner,
+        shopBannerData: user.shopBannerData,
         avatarData: user.avatarData
       }
     });

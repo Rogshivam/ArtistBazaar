@@ -1,6 +1,7 @@
 import { Router } from "express";
 import User from "../models/User.js";
 import Product from "../models/Product.js";
+import Review from "../models/Review.js";
 import { requireAuth } from "../utils/auth.js";
 
 const r = Router();
@@ -76,23 +77,65 @@ r.get("/artisans/:id", async (req, res) => {
       return res.status(404).json({ message: "Artisan not found" });
     }
 
-    const products = await Product.find({ seller: artisan._id })
-      .sort({ createdAt: -1 })
-      .limit(10);
-
-    const stats = {
-      productCount: await Product.countDocuments({ seller: artisan._id }),
-      totalSales: await Product.aggregate([
-        { $match: { seller: artisan._id } },
-        { $group: { _id: null, total: { $sum: "$sales" } } }
-      ])
+    // Filters for product catalog (optional)
+    const { q, category, minPrice, maxPrice, sort = "-createdAt", page = "1", limit = "10" } = req.query;
+    const filter = { seller: artisan._id };
+    if (q) {
+      filter.$or = [
+        { name: { $regex: q, $options: "i" } },
+        { description: { $regex: q, $options: "i" } },
+        { tags: { $in: [new RegExp(q, "i")] } }
+      ];
+    }
+    if (category) filter.category = String(category);
+    if (minPrice || maxPrice) filter.price = {
+      ...(minPrice ? { $gte: Number(minPrice) } : {}),
+      ...(maxPrice ? { $lte: Number(maxPrice) } : {}),
     };
 
-    return res.json({ 
+    const pageNum = Math.max(1, parseInt(String(page)) || 1);
+    const limitNum = Math.max(1, Math.min(100, parseInt(String(limit)) || 10));
+    const skip = (pageNum - 1) * limitNum;
+
+    const [productCount, categories, topSelling, recentProducts, catalogDocs, totalCatalog, ratingAgg] = await Promise.all([
+      Product.countDocuments({ seller: artisan._id }),
+      Product.distinct("category", { seller: artisan._id }),
+      Product.find({ seller: artisan._id }).sort({ sales: -1 }).limit(5),
+      Product.find({ seller: artisan._id }).sort({ createdAt: -1 }).limit(6),
+      Product.find(filter).sort(String(sort)).skip(skip).limit(limitNum),
+      Product.countDocuments(filter),
+      Review.aggregate([
+        { $match: { seller: artisan._id, status: "published" } },
+        { $group: { _id: "$seller", avgRating: { $avg: "$rating" }, count: { $sum: 1 } } }
+      ])
+    ]);
+
+    const avgRating = ratingAgg?.[0]?.avgRating || 0;
+    const reviewCount = ratingAgg?.[0]?.count || 0;
+
+    return res.json({
       artisan: {
         ...artisan.toObject(),
-        ...stats,
-        recentProducts: products
+        overview: {
+          productCount,
+          categories,
+          topSelling,
+          recentProducts,
+          catalog: {
+            items: catalogDocs,
+            total: totalCatalog,
+            page: pageNum,
+            pages: Math.ceil(totalCatalog / limitNum)
+          }
+        },
+        trust: {
+          avgRating,
+          reviews: reviewCount,
+          responseRate: artisan.responseRate ?? 100,
+          responseTimeMinutesAvg: artisan.responseTimeMinutesAvg ?? 60,
+          isVerifiedSeller: !!artisan.isVerifiedSeller,
+          joinDate: artisan.createdAt
+        }
       }
     });
   } catch (error) {

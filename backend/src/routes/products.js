@@ -20,7 +20,7 @@ const r = Router();
 
 r.get("/", async (req, res) => {
   try {
-    const { q, category, tags, minPrice, maxPrice, sort = "-createdAt", page = "1", limit = "20" } = req.query;
+    const { q, category, tags, minPrice, maxPrice, sort = "-createdAt", page = "1", limit = "20", seller } = req.query;
     const filter = { status: "active" }; // Only show active products
     
     if (q) {
@@ -32,6 +32,7 @@ r.get("/", async (req, res) => {
     }
     if (category) filter.category = String(category);
     if (tags) filter.tags = { $in: String(tags).split(",") };
+    if (seller) filter.seller = String(seller);
     if (minPrice || maxPrice) filter.price = {
       ...(minPrice ? { $gte: Number(minPrice) } : {}),
       ...(maxPrice ? { $lte: Number(maxPrice) } : {}),

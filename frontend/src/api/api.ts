@@ -144,6 +144,25 @@ class ApiService {
     return this.request('/api/seller/products');
   }
 
+  // Artisan detail (profile + overview + trust + catalog)
+  async getArtisanDetail(id: string, params: {
+    q?: string;
+    category?: string;
+    minPrice?: string;
+    maxPrice?: string;
+    page?: string;
+    limit?: string;
+    sort?: string;
+  } = {}) {
+    const searchParams = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value) searchParams.append(key, value);
+    });
+    const query = searchParams.toString();
+    const suffix = query ? `?${query}` : "";
+    return this.request(`/api/artisans/${id}${suffix}`);
+  }
+
   async getCategories() {
     return this.request('/api/products/categories');
   }
@@ -229,6 +248,18 @@ class ApiService {
       body: formData,
       headers: {
         // Remove Content-Type header to let browser set it with boundary
+        'auth-token': this.getAuthHeaders()['auth-token'] || '',
+      },
+    });
+  }
+
+  async uploadShopBanner(file: File) {
+    const formData = new FormData();
+    formData.append('banner', file);
+    return this.request('/api/profile/banner', {
+      method: 'POST',
+      body: formData,
+      headers: {
         'auth-token': this.getAuthHeaders()['auth-token'] || '',
       },
     });

@@ -93,6 +93,35 @@ const userSchema = new mongoose.Schema({
     type: String,
     maxlength: 200
   }],
+  // Seller trust & performance
+  isVerifiedSeller: {
+    type: Boolean,
+    default: false
+  },
+  responseRate: {
+    // percentage 0-100
+    type: Number,
+    min: 0,
+    max: 100,
+    default: 100
+  },
+  responseTimeMinutesAvg: {
+    type: Number,
+    min: 0,
+    default: 60
+  },
+  // Shop banner/cover
+  shopBanner: {
+    type: String,
+    maxlength: 500
+  },
+  shopBannerData: {
+    publicId: String,
+    url: String,
+    width: Number,
+    height: Number,
+    format: String
+  },
   // Cloudinary image data
   avatarData: {
     publicId: String,
