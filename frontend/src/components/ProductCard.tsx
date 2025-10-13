@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/context/CartContext/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { useAlert } from "@/context/alert/AlertContext";
+import { useNavigate } from "react-router-dom";
 
 interface ProductCardProps {
   id?: string;
@@ -24,7 +25,7 @@ interface ProductCardProps {
 }
 
 export function ProductCard({
-  id,
+  id = '',
   name,
   price,
   artisan,
@@ -35,9 +36,23 @@ export function ProductCard({
   materials = ["Clay", "Natural Glazes"],
   rating = 4,
   reviews = 23,
-  tags = [], // ✅ default empty array
+  tags = [],
   onClick,
 }: ProductCardProps) {
+  const navigate = useNavigate();
+  
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Only navigate if the click wasn't on a button or link
+    if (e.target instanceof Element && (e.target.closest('button') || e.target.closest('a'))) {
+      return;
+    }
+    
+    if (onClick) {
+      onClick();
+    } else if (id) {
+      navigate(`/products/${id}`);
+    }
+  };
   const { toast } = useToast();
   const { addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
@@ -95,8 +110,8 @@ export function ProductCard({
 
   return (
     <Card
-      className="group hover:shadow-warm transition-all duration-300 hover:-translate-y-1 cursor-pointer"
-      onClick={onClick}
+      className="group hover:shadow-warm transition-all duration-300 hover:-translate-y-1 cursor-pointer h-full flex flex-col"
+      onClick={handleCardClick}
     >
       {/* Image Section */}
       <div className="aspect-square bg-gradient-subtle rounded-t-lg flex items-center justify-center text-6xl relative overflow-hidden">

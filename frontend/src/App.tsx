@@ -13,6 +13,7 @@ import Signup from "./components/Signup";
 import AlertState from "./context/alert/AlertState";
 import FindSuppliers from "./pages/FindSuppliers";
 import Products from "./pages/Products";
+import ProductDetail from "./pages/ProductDetail";
 import Artisans from "./pages/Artisans";
 import Chat from "./pages/Chat";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -66,6 +67,7 @@ const App = () => (
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/products" element={<Products />} />
+                  <Route path="/products/:id" element={<ProductDetail />} />
                   <Route path="/artisans" element={<Artisans />} />
                   <Route path="/profile/:id" element={<ProfileView />} />
                   <Route path="/chat/:id" element={<ProtectedRoute roles={["Customer", "Seller", "Services", "Admin"]}><DirectChat /></ProtectedRoute>} />
