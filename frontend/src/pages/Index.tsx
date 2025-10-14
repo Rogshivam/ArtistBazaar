@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from "react";
+import { ChatButton } from "@/components/ChatButton";
+import { ChatWindow } from "@/components/ChatWindow";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -41,6 +43,7 @@ interface Artisan {
 }
 
 const Index = () => {
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const artisanScrollRef = useRef<HTMLDivElement>(null);
@@ -106,6 +109,12 @@ const Index = () => {
   return (
     <div className="min-h-screen w-full bg-gradient-subtle">
       <Navbar />
+      {/* Floating Chat Button */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <ChatButton isOpen={isChatOpen} onClick={() => setIsChatOpen(!isChatOpen)} />
+      </div>
+      {/* Chat Window */}
+      <ChatWindow isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
       {/* Hero Section */}
       <section id="home" className="relative overflow-hidden bg-gradient-hero">
         <div className="absolute inset-0 bg-black/20"></div>

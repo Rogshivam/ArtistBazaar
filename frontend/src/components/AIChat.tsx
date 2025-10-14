@@ -131,7 +131,7 @@ const AIChat: React.FC = () => {
                 <Bot className="w-4 h-4 text-white" />
               </div>
               <div>
-                <CardTitle className="text-lg">AI Assistant</CardTitle>
+                <CardTitle className="text-lg">Technical support</CardTitle>
                 <Badge variant="secondary" className="text-xs">
                   Online
                 </Badge>

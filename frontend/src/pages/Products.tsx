@@ -4,8 +4,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ProductCard } from "@/components/ProductCard";
 import Navbar from "@/components/Navbar";
-import { Loader2, Filter, X } from "lucide-react";
+import WishlistDrawer from "@/components/WishlistDrawer";
+import { AddProductDialog } from "@/components/AddProductDialog";
 import { useProductContext } from "@/context/ProductContext/ProductContext";
+import { useAuth } from "@/context/auth/AuthContext";
+import { Loader2, Filter, X, Heart, Plus } from "lucide-react";
 
 export default function Products() {
   const {
@@ -27,6 +30,9 @@ export default function Products() {
   } = useProductContext();
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [wishlistOpen, setWishlistOpen] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
+  const { user } = useAuth();
 
   const availableCategories = ["Pottery", "Jewelry", "Textiles", "Woodwork", "Bamboo"];
   const availableTags = ["handmade", "traditional", "eco", "gift", "premium"];
@@ -45,6 +51,21 @@ export default function Products() {
       <Navbar />
 
       <div className="max-w-7xl mx-auto px-4 py-6 grid grid-cols-1 md:grid-cols-4 gap-8 relative">
+        {/* Page Actions */}
+        <div className="md:col-span-4 flex items-center justify-between mb-2">
+          <h1 className="text-xl font-semibold">All Products</h1>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => setWishlistOpen(true)} className="flex items-center gap-2">
+              <Heart className="h-4 w-4" /> Wishlist
+            </Button>
+            {user?.role === "Seller" && (
+              <Button onClick={() => setAddOpen(true)} className="flex items-center gap-2">
+                <Plus className="h-4 w-4" /> Add Product
+              </Button>
+            )}
+          </div>
+        </div>
+
         {/* Mobile Filter Toggle */}
         <div className="md:hidden mb-4">
           <Button
@@ -207,6 +228,16 @@ export default function Products() {
           )}
         </main>
 
+        {/* Drawers/Dialogs */}
+        <WishlistDrawer isOpen={wishlistOpen} onClose={() => setWishlistOpen(false)} />
+        <AddProductDialog
+          open={addOpen}
+          onOpenChange={setAddOpen}
+          onSuccess={() => {
+            setAddOpen(false);
+            fetchProducts(1);
+          }}
+        />
       </div>
     </div>
   );

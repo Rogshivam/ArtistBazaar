@@ -15,15 +15,18 @@ interface Product {
   _id: string;
   name: string;
   price: number;
-  artisan: string;
-  location: string;
   description: string;
+  // Optional fields from ApiProduct
+  artisan?: string;
+  location?: string;
+  category?: string;
   image?: string;
+  images?: string[];
+  imagesData?: Array<{ url?: string }>; 
   materials?: string[];
   rating?: number;
   reviews?: number;
   tags?: string[];
-  category?: string;
 }
 
 export default function ProductDetail() {
@@ -39,24 +42,27 @@ export default function ProductDetail() {
   const [loading, setLoading] = useState(true);
   const [similarProducts, setSimilarProducts] = useState<Product[]>([]);
   const [quantity, setQuantity] = useState(1);
+  const [showFullDesc, setShowFullDesc] = useState(false);
 
   useEffect(() => {
     const fetchProduct = async () => {
       try {
         // In a real app, you would fetch the product by ID from your API
         // For now, we'll simulate this by finding the product in the existing products
-        const foundProduct = products.find(p => p._id === id);
+        const foundProduct = products.find(p => p._id === id) as unknown as Product | undefined;
         if (foundProduct) {
           setProduct(foundProduct);
           // Find similar products (same category or tags)
           const similar = products
             .filter(p => 
               p._id !== id && 
-              (p.category === foundProduct.category || 
-               p.tags?.some(tag => foundProduct.tags?.includes(tag)))
+              (
+                p.category === foundProduct.category ||
+                (p.tags && foundProduct.tags && p.tags.some(tag => foundProduct.tags!.includes(tag)))
+              )
             )
-            .slice(0, 4); // Show max 4 similar products
-          setSimilarProducts(similar);
+            .slice(0, 4) as unknown as Product[]; // Show max 4 similar products
+          setSimilarProducts(similar as Product[]);
         } else {
           // If product not found, redirect to products page
           navigate('/products');
@@ -140,7 +146,7 @@ export default function ProductDetail() {
         {/* Product Image */}
         <div className="bg-white rounded-lg overflow-hidden shadow-md">
           <img
-            src={product.image || '/placeholder-product.jpg'}
+            src={product.image || product.images?.[0] || product.imagesData?.[0]?.url || '/placeholder-product.jpg'}
             alt={product.name}
             className="w-full h-auto object-cover rounded-lg"
           />
@@ -168,11 +174,25 @@ export default function ProductDetail() {
           </div>
 
           <div className="text-3xl font-bold text-gray-900">
-            ${product.price.toFixed(2)}
+            ₹{Number(product.price).toLocaleString('en-IN')}
           </div>
 
           <div className="text-gray-700">
-            <p>{product.description}</p>
+            {product.description && product.description.length > 220 ? (
+              <>
+                <p>
+                  {showFullDesc ? product.description : `${product.description.slice(0, 220)}...`}
+                </p>
+                <button
+                  className="text-primary mt-2 text-sm"
+                  onClick={() => setShowFullDesc((v) => !v)}
+                >
+                  {showFullDesc ? 'Read less' : 'Read more'}
+                </button>
+              </>
+            ) : (
+              <p>{product.description}</p>
+            )}
           </div>
 
           {product.materials && product.materials.length > 0 && (
@@ -190,7 +210,7 @@ export default function ProductDetail() {
 
           <div className="flex items-center gap-2 text-sm text-gray-500">
             <MapPin className="h-4 w-4" />
-            <span>{product.location}</span>
+            <span>{product.location || product.category}</span>
           </div>
 
           <div className="flex items-center gap-4 pt-4">
@@ -250,10 +270,10 @@ export default function ProductDetail() {
                 id={item._id}
                 name={item.name}
                 price={item.price}
-                artisan={item.artisan}
-                location={item.location}
+                artisan={item.artisan || 'Local Artisan'}
+                location={item.location || item.category || 'Handmade'}
                 story={item.description}
-                image={item.image}
+                image={item.image || item.images?.[0] || item.imagesData?.[0]?.url}
                 rating={item.rating}
                 reviews={item.reviews}
                 tags={item.tags}
