@@ -81,7 +81,7 @@ export const ChatWindow = ({ isOpen, onClose }: ChatWindowProps) => {
 
   return (
     <div className="fixed inset-0 w-full h-full bg-background/95 backdrop-blur-sm flex items-center justify-center z-[101] p-4 sm:p-8 animate-in fade-in duration-300">
-      <div className="relative mx-auto w-full max-w-4xl h-full max-h-[800px] bg-card rounded-3xl shadow-glow flex flex-col overflow-hidden border border-border">
+      <div className=" relative mx-auto w-full max-w-4xl h-full max-h-[800px] bg-card rounded-3xl shadow-glow flex flex-col overflow-hidden border border-border">
         {/* Header */}
         <div className="gradient-primary text-primary p-5 font-bold text-lg shadow-medium flex justify-between items-center">
           <div className="flex items-center gap-2">
@@ -90,7 +90,7 @@ export const ChatWindow = ({ isOpen, onClose }: ChatWindowProps) => {
             </div>
             <span className="truncate">{t.buttonTitle}</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 ">
             {/* Language Toggle */}
             <Button
               onClick={toggleLanguage}
@@ -115,8 +115,8 @@ export const ChatWindow = ({ isOpen, onClose }: ChatWindowProps) => {
         </div>
 
         {/* Messages Area */}
-        <ScrollArea className="flex-1 p-6 gradient-subtle">
-          <div className="space-y-4">
+        <ScrollArea className="flex-1 p-6 gradient-subtle bg-primary max-h-[600px] overflow-y-auto ">
+          <div className="space-y-4 ">
             {messages.map((m, index) => (
               <MessageBubble key={index} message={m} productData={mockProductData} />
             ))}
@@ -126,8 +126,8 @@ export const ChatWindow = ({ isOpen, onClose }: ChatWindowProps) => {
         </ScrollArea>
 
         {/* Input Form */}
-        <form onSubmit={handleSendMessage} className="p-5 border-t border-border bg-card shadow-soft">
-          <div className="flex gap-3">
+        <form onSubmit={handleSendMessage} className="p-5  border-t border-border bg-card shadow-soft">
+          <div className="flex gap-3 ">
             <Input
               type="text"
               value={input}
@@ -140,9 +140,9 @@ export const ChatWindow = ({ isOpen, onClose }: ChatWindowProps) => {
               type="submit"
               disabled={loading || !input.trim()}
               size="lg"
-              className="gradient-primary rounded-xl shadow-soft hover:shadow-medium transition-smooth"
+              className="gradient-primary  rounded-xl shadow-soft hover:shadow-medium transition-smooth "
             >
-              <Send className="h-5 w-5" />
+              <Send className="h-5 w-5 " />
             </Button>
           </div>
         </form>
