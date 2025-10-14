@@ -7,6 +7,7 @@ import { useCart } from "@/context/CartContext/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { useAlert } from "@/context/alert/AlertContext";
 import { useNavigate } from "react-router-dom";
+import { useMemo, useState } from "react";
 
 interface ProductCardProps {
   id?: string;
@@ -16,6 +17,7 @@ interface ProductCardProps {
   location: string;
   story: string;
   image?: string;
+  images?: string[];
   description?: string;
   materials?: string[];
   rating?: number;
@@ -32,6 +34,7 @@ export function ProductCard({
   location,
   story,
   image,
+  images = [],
   description,
   materials = ["Clay", "Natural Glazes"],
   rating = 4,
@@ -40,6 +43,12 @@ export function ProductCard({
   onClick,
 }: ProductCardProps) {
   const navigate = useNavigate();
+  const [imgIndex, setImgIndex] = useState(0);
+  const candidates = useMemo(() => {
+    const list = [image, ...images].filter(Boolean).map((s) => (s || '').trim());
+    // de-duplicate while preserving order
+    return Array.from(new Set(list));
+  }, [image, images]);
   
   const handleCardClick = (e: React.MouseEvent) => {
     // Only navigate if the click wasn't on a button or link
@@ -115,19 +124,26 @@ export function ProductCard({
     >
       {/* Image Section */}
       <div className="aspect-square bg-gradient-subtle rounded-t-lg flex items-center justify-center text-6xl relative overflow-hidden">
-        {image ? (
+        {candidates[imgIndex] ? (
           <img
-            src={image}
+            src={candidates[imgIndex]}
             alt={name}
             className="w-full h-full object-cover"
+            loading="lazy"
+            referrerPolicy="no-referrer"
+            crossOrigin="anonymous"
             onError={(e) => {
-              // Fallback to emoji if image fails to load
-              e.currentTarget.style.display = 'none';
-              e.currentTarget.nextElementSibling?.classList.remove('hidden');
+              // Try next candidate; if none left, show emoji
+              if (imgIndex + 1 < candidates.length) {
+                setImgIndex((i) => i + 1);
+              } else {
+                e.currentTarget.style.display = 'none';
+                e.currentTarget.nextElementSibling?.classList.remove('hidden');
+              }
             }}
           />
         ) : null}
-        <div className={`w-full h-full flex items-center justify-center ${image ? 'hidden' : ''}`}>
+        <div className={`w-full h-full flex items-center justify-center ${candidates[imgIndex] ? 'hidden' : ''}`}>
           🏺
         </div>
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-300 flex items-center justify-center">

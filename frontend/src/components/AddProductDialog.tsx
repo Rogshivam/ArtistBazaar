@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,12 +32,33 @@ export function AddProductDialog({ open, onOpenChange, onSuccess }: AddProductDi
     price: "",
     sku: "",
     stock: "",
-    tags: "",
+    tags: [] as string[],
   });
   const [images, setImages] = useState<File[]>([]);
   const [imageUrl, setImageUrl] = useState("");
   const [imageMode, setImageMode] = useState<'upload' | 'url'>('upload');
   const { toast } = useToast();
+  const [customTag, setCustomTag] = useState("");
+  const availableTags = ["handmade", "traditional", "eco", "gift", "premium"];
+  const selectedTagSet = useMemo(() => new Set(formData.tags), [formData.tags]);
+
+  const toggleTag = (tag: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      tags: selectedTagSet.has(tag)
+        ? prev.tags.filter((t) => t !== tag)
+        : [...prev.tags, tag],
+    }));
+  };
+
+  const addCustomTag = () => {
+    const t = customTag.trim();
+    if (!t) return;
+    if (!selectedTagSet.has(t)) {
+      setFormData((prev) => ({ ...prev, tags: [...prev.tags, t] }));
+    }
+    setCustomTag("");
+  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -106,7 +127,7 @@ export function AddProductDialog({ open, onOpenChange, onSuccess }: AddProductDi
         ...formData,
         price: Number(formData.price),
         stock: formData.stock ? Number(formData.stock) : 0,
-        tags: formData.tags ? formData.tags.split(',').map(s => s.trim()).filter(Boolean) : [],
+        tags: Array.isArray(formData.tags) ? formData.tags : [],
         image: imageUrls[0], // associate primary image explicitly
         images: imageUrls, // backend createSchema expects array of strings
       } as any;
@@ -126,7 +147,7 @@ export function AddProductDialog({ open, onOpenChange, onSuccess }: AddProductDi
         price: "",
         sku: "",
         stock: "",
-        tags: "", // keep tags so form stays stable
+        tags: [],
       });
       setImages([]);
       setImageUrl("");
@@ -173,6 +194,12 @@ export function AddProductDialog({ open, onOpenChange, onSuccess }: AddProductDi
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="Painting">Pottery</SelectItem>
+                  <SelectItem value="Painting">Jewelry</SelectItem>
+                  <SelectItem value="Painting">Textiles</SelectItem>
+                  <SelectItem value="Painting">Woodwork</SelectItem>
+                  <SelectItem value="Painting">Bamboo</SelectItem>
+                  <SelectItem value="Painting">Painting</SelectItem>
                   <SelectItem value="Painting">Painting</SelectItem>
                   <SelectItem value="Sculpture">Sculpture</SelectItem>
                   <SelectItem value="Craft">Craft</SelectItem>
@@ -224,6 +251,47 @@ export function AddProductDialog({ open, onOpenChange, onSuccess }: AddProductDi
               placeholder="Detailed product description, specifications, features..."
               className="min-h-[100px]"
             />
+          </div>
+
+          {/* Tags selector */}
+          <div className="space-y-2">
+            <Label>Tags</Label>
+            <div className="flex flex-wrap gap-2">
+              {availableTags.map((t) => (
+                <button
+                  type="button"
+                  key={t}
+                  onClick={() => toggleTag(t)}
+                  className={`px-3 py-1 rounded-full text-sm border transition ${selectedTagSet.has(t)
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-background hover:bg-muted"}
+                  `}
+                >
+                  #{t}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Add custom tag and press Enter"
+                value={customTag}
+                onChange={(e) => setCustomTag(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addCustomTag();
+                  }
+                }}
+              />
+              <Button type="button" variant="outline" onClick={addCustomTag}>Add</Button>
+            </div>
+            {formData.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {formData.tags.map((t) => (
+                  <span key={t} className="px-2 py-0.5 text-xs rounded-full bg-muted text-muted-foreground">#{t}</span>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="space-y-4">

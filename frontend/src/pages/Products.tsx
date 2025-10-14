@@ -34,7 +34,7 @@ export default function Products() {
   const [addOpen, setAddOpen] = useState(false);
   const { user } = useAuth();
 
-  const availableCategories = ["Pottery", "Jewelry", "Textiles", "Woodwork", "Bamboo"];
+  const availableCategories = ["Craft","Sculpture","Painting","Pottery", "Jewelry", "Textiles", "Woodwork", "Bamboo","Other"];
   const availableTags = ["handmade", "traditional", "eco", "gift", "premium"];
   const selectedTagSet = useMemo(() => new Set(tags), [tags]);
 
@@ -193,7 +193,8 @@ export default function Products() {
                   artisan={p.artisan || "Local Artisan"}
                   location={p.location || p.category}
                   story={p.description}
-                  image={p.image || p.images?.[0] || p.imagesData?.[0]?.url} 
+                  image={p.images?.[0] || p.image || p.imagesData?.[0]?.url}
+                  images={p.images}
                   tags={p.tags}
                 />
               ))}
