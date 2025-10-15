@@ -33,7 +33,17 @@ const productSchema = new mongoose.Schema(
       type: String,
       trim: true,
       enum: {
-        values: ["Painting", "Sculpture", "Craft", "Other"], // Example categories
+        values: [
+          "Pottery",
+          "Jewelry",
+          "Textiles",
+          "Woodwork",
+          "Bamboo",
+          "Painting",
+          "Sculpture",
+          "Craft",
+          "Other",
+        ],
         message: "{VALUE} is not a valid category",
       },
     },

@@ -194,7 +194,6 @@ export default function Products() {
                   location={p.location || p.category}
                   story={p.description}
                   image={p.images?.[0] || p.image || p.imagesData?.[0]?.url}
-                  images={p.images}
                   tags={p.tags}
                 />
               ))}

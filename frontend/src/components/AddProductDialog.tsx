@@ -194,12 +194,11 @@ export function AddProductDialog({ open, onOpenChange, onSuccess }: AddProductDi
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Painting">Pottery</SelectItem>
-                  <SelectItem value="Painting">Jewelry</SelectItem>
-                  <SelectItem value="Painting">Textiles</SelectItem>
-                  <SelectItem value="Painting">Woodwork</SelectItem>
-                  <SelectItem value="Painting">Bamboo</SelectItem>
-                  <SelectItem value="Painting">Painting</SelectItem>
+                  <SelectItem value="Pottery">Pottery</SelectItem>
+                  <SelectItem value="Jewelry">Jewelry</SelectItem>
+                  <SelectItem value="Textiles">Textiles</SelectItem>
+                  <SelectItem value="Woodwork">Woodwork</SelectItem>
+                  <SelectItem value="Bamboo">Bamboo</SelectItem>
                   <SelectItem value="Painting">Painting</SelectItem>
                   <SelectItem value="Sculpture">Sculpture</SelectItem>
                   <SelectItem value="Craft">Craft</SelectItem>
