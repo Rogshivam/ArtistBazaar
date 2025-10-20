@@ -1,15 +1,17 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, Heart, ShoppingCart, ArrowLeft, MapPin } from "lucide-react";
+import { Star, Heart, ShoppingCart, ArrowLeft, MapPin, Plus, Minus, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/context/CartContext/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { useAlert } from "@/context/alert/AlertContext";
 import { useProductContext } from "@/context/ProductContext/ProductContext";
 import { ProductCard } from "@/components/ProductCard";
+import Navbar from "@/components/Navbar";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 interface Product {
   _id: string;
@@ -43,6 +45,12 @@ export default function ProductDetail() {
   const [similarProducts, setSimilarProducts] = useState<Product[]>([]);
   const [quantity, setQuantity] = useState(1);
   const [showFullDesc, setShowFullDesc] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [zoomOpen, setZoomOpen] = useState(false);
+  const [zoomScale, setZoomScale] = useState(1);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const [panStart, setPanStart] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -81,6 +89,54 @@ export default function ProductDetail() {
       fetchProduct();
     }
   }, [id, products, navigate, showError]);
+
+  // Build gallery images from any available product image fields
+  const galleryImages = useMemo(() => {
+    if (!product) return [] as string[];
+    const fromImages = Array.isArray(product.images) ? (product.images.filter(Boolean) as string[]) : [];
+    const fromImage = product.image ? [product.image] : [];
+    const fromImagesData = Array.isArray(product.imagesData)
+      ? ((product.imagesData
+          .map((i) => (i && i.url ? i.url : undefined))
+          .filter(Boolean)) as string[])
+      : [];
+    const merged = [...fromImages, ...fromImage, ...fromImagesData];
+    // Deduplicate while keeping order
+    return Array.from(new Set(merged));
+  }, [product]);
+
+  // Reset selected image when product or gallery changes
+  useEffect(() => {
+    setSelectedImageIndex(0);
+  }, [product?._id]);
+
+  const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
+  const openZoom = () => {
+    setZoomOpen(true);
+    setZoomScale(1);
+    setOffset({ x: 0, y: 0 });
+  };
+  const onWheel: React.WheelEventHandler<HTMLDivElement> = (e) => {
+    e.preventDefault();
+    const delta = e.deltaY < 0 ? 0.1 : -0.1;
+    setZoomScale((s) => clamp(Number((s + delta).toFixed(2)), 1, 4));
+  };
+  const onMouseDown: React.MouseEventHandler<HTMLDivElement> = (e) => {
+    if (zoomScale === 1) return;
+    setIsPanning(true);
+    setPanStart({ x: e.clientX - offset.x, y: e.clientY - offset.y });
+  };
+  const onMouseMove: React.MouseEventHandler<HTMLDivElement> = (e) => {
+    if (!isPanning) return;
+    setOffset({ x: e.clientX - panStart.x, y: e.clientY - panStart.y });
+  };
+  const endPan = () => setIsPanning(false);
+  const zoomIn = () => setZoomScale((s) => clamp(Number((s + 0.2).toFixed(2)), 1, 4));
+  const zoomOut = () => setZoomScale((s) => clamp(Number((s - 0.2).toFixed(2)), 1, 4));
+  const resetZoom = () => {
+    setZoomScale(1);
+    setOffset({ x: 0, y: 0 });
+  };
 
   const handleAddToCart = async () => {
     if (!product) return;
@@ -132,7 +188,9 @@ export default function ProductDetail() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-foreground/5">
+      <Navbar />
+      <div className="container mx-auto px-4 py-8">
       <Button 
         variant="ghost" 
         onClick={() => navigate(-1)}
@@ -143,13 +201,32 @@ export default function ProductDetail() {
 
       {/* Product Details */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
-        {/* Product Image */}
-        <div className="bg-white rounded-lg overflow-hidden shadow-md">
-          <img
-            src={product.image || product.images?.[0] || product.imagesData?.[0]?.url || '/placeholder-product.jpg'}
-            alt={product.name}
-            className="w-full h-auto object-cover rounded-lg"
-          />
+        {/* Product Images Gallery */}
+        <div>
+          <div className="bg-white rounded-lg overflow-hidden shadow-md">
+            <img
+              src={galleryImages[selectedImageIndex] || '/placeholder.svg'}
+              alt={product.name}
+              className="w-full aspect-square object-cover cursor-zoom-in"
+              onClick={openZoom}
+            />
+          </div>
+          {galleryImages.length > 1 && (
+            <div className="mt-3 grid grid-cols-5 sm:grid-cols-6 md:grid-cols-5 gap-2">
+              {galleryImages.map((img, idx) => (
+                <button
+                  key={img + idx}
+                  className={`relative rounded-lg overflow-hidden border ${
+                    idx === selectedImageIndex ? 'border-primary ring-2 ring-primary/40' : 'border-transparent'
+                  }`}
+                  onClick={() => setSelectedImageIndex(idx)}
+                  aria-label={`Select image ${idx + 1}`}
+                >
+                  <img src={img} alt={`Thumb ${idx + 1}`} className="w-full aspect-square object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Product Info */}
@@ -259,7 +336,6 @@ export default function ProductDetail() {
         </div>
       </div>
 
-      {/* Similar Products */}
       {similarProducts.length > 0 && (
         <div className="mt-16">
           <h2 className="text-2xl font-bold mb-6">You May Also Like</h2>
@@ -273,7 +349,7 @@ export default function ProductDetail() {
                 artisan={item.artisan || 'Local Artisan'}
                 location={item.location || item.category || 'Handmade'}
                 story={item.description}
-                image={item.image || item.images?.[0] || item.imagesData?.[0]?.url}
+                image={item.images?.[0] || item.image || item.imagesData?.[0]?.url}
                 rating={item.rating}
                 reviews={item.reviews}
                 tags={item.tags}
@@ -283,6 +359,60 @@ export default function ProductDetail() {
           </div>
         </div>
       )}
+      
+      <Dialog open={zoomOpen} onOpenChange={setZoomOpen}>
+        <DialogContent className="max-w-5xl w-full p-0 bg-black/95">
+          <div
+            className="relative w-full h-[70vh] md:h-[80vh] overflow-hidden select-none"
+            onWheel={onWheel}
+            onMouseDown={onMouseDown}
+            onMouseMove={onMouseMove}
+            onMouseUp={endPan}
+            onMouseLeave={endPan}
+          >
+            <img
+              src={galleryImages[selectedImageIndex] || '/placeholder.svg'}
+              alt={product.name}
+              draggable={false}
+              className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 ${zoomScale > 1 ? 'cursor-grabbing' : 'cursor-zoom-in'}`}
+              style={{ transform: `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px)) scale(${zoomScale})` }}
+            />
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2">
+              <Button variant="secondary" size="icon" onClick={zoomOut} aria-label="Zoom out">
+                <Minus className="h-4 w-4" />
+              </Button>
+              <div className="px-3 py-1 text-white bg-black/60 rounded-md text-sm">{Math.round(zoomScale * 100)}%</div>
+              <Button variant="secondary" size="icon" onClick={zoomIn} aria-label="Zoom in">
+                <Plus className="h-4 w-4" />
+              </Button>
+              <Button variant="secondary" size="sm" onClick={resetZoom} className="ml-2" aria-label="Reset zoom">
+                Reset
+              </Button>
+            </div>
+            {galleryImages.length > 1 && (
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 flex gap-2 bg-black/40 p-2 rounded-lg">
+                {galleryImages.map((img, idx) => (
+                  <button
+                    key={img + idx}
+                    className={`h-14 w-14 rounded-md overflow-hidden border ${idx === selectedImageIndex ? 'border-primary' : 'border-transparent'}`}
+                    onClick={() => { setSelectedImageIndex(idx); resetZoom(); }}
+                  >
+                    <img src={img} alt={`Slide ${idx + 1}`} className="h-full w-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
+            <button
+              className="absolute top-3 right-3 text-white/90 hover:text-white"
+              onClick={() => setZoomOpen(false)}
+              aria-label="Close"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+      </div>
     </div>
   );
 }

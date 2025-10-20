@@ -50,6 +50,7 @@ import { Layout } from "./components/PanelLout/Layout";
 import { AuthProvider } from "@/context/auth/AuthContext";
 import ChatThread from "@/pages/ChatThread";
 // import LoadingState from "./context/loading/LoadingState"; // if you also use loading context
+import ServicePanel from "@/pages/ServicePanel";
 
 const queryClient = new QueryClient();
 
@@ -72,6 +73,16 @@ const App = () => (
                   <Route path="/profile/:id" element={<ProfileView />} />
                   <Route path="/chat/:id" element={<ProtectedRoute roles={["Customer", "Seller", "Services", "Admin"]}><DirectChat /></ProtectedRoute>} />
                   <Route path="/chat" element={<ProtectedRoute roles={["Customer", "Seller", "Services", "Admin"]}><Chat /></ProtectedRoute>} />
+                  <Route
+                    path="/services/:id"
+                    element={
+                      <ProtectedRoute roles={["Services"]}>
+                        <Layout />
+                      </ProtectedRoute>
+                    }
+                  >
+                    <Route index element={<ServicePanel />} />
+                  </Route>
                   {/* <Route path="/seller/:id" element={<ProtectedRoute roles={["Seller"]}><SellerPage /></ProtectedRoute>}><Route path="about" element={<About />} /><Route path="/settings" element={<Settings />} /><Route path="/analytics" element={<Analytics />} /></Route> */}
                   {/* <Route path="/seller/:id" element={<ProtectedRoute roles={["Seller"]}><SellerPage /></ProtectedRoute>} /> */}
                   {/* Seller Dashboard with Nested Routes */}

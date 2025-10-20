@@ -108,7 +108,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } else if (userData.role === "Admin") {
       navigate(`/admin`);
     } else if (userData.role === "Services") {
-      navigate(`/services/${userData.id}`);
+      navigate(`/services/`);
     } else {
       navigate(`/`);
     }
