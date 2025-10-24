@@ -208,6 +208,9 @@ export default function ProductDetail() {
               src={galleryImages[selectedImageIndex] || '/placeholder.svg'}
               alt={product.name}
               className="w-full aspect-square object-cover cursor-zoom-in"
+              loading="lazy"
+              referrerPolicy="no-referrer"
+              crossOrigin="anonymous"
               onClick={openZoom}
             />
           </div>
@@ -222,7 +225,14 @@ export default function ProductDetail() {
                   onClick={() => setSelectedImageIndex(idx)}
                   aria-label={`Select image ${idx + 1}`}
                 >
-                  <img src={img} alt={`Thumb ${idx + 1}`} className="w-full aspect-square object-cover" />
+                  <img
+                    src={img}
+                    alt={`Thumb ${idx + 1}`}
+                    className="w-full aspect-square object-cover"
+                    loading="lazy"
+                    referrerPolicy="no-referrer"
+                    crossOrigin="anonymous"
+                  />
                 </button>
               ))}
             </div>
@@ -376,6 +386,17 @@ export default function ProductDetail() {
               draggable={false}
               className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 ${zoomScale > 1 ? 'cursor-grabbing' : 'cursor-zoom-in'}`}
               style={{ transform: `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px)) scale(${zoomScale})` }}
+              loading="lazy"
+              referrerPolicy="no-referrer"
+              crossOrigin="anonymous"
+              onDoubleClick={() => {
+                if (zoomScale === 1) {
+                  setZoomScale(2);
+                } else {
+                  setZoomScale(1);
+                  setOffset({ x: 0, y: 0 });
+                }
+              }}
             />
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2">
               <Button variant="secondary" size="icon" onClick={zoomOut} aria-label="Zoom out">
@@ -397,7 +418,14 @@ export default function ProductDetail() {
                     className={`h-14 w-14 rounded-md overflow-hidden border ${idx === selectedImageIndex ? 'border-primary' : 'border-transparent'}`}
                     onClick={() => { setSelectedImageIndex(idx); resetZoom(); }}
                   >
-                    <img src={img} alt={`Slide ${idx + 1}`} className="h-full w-full object-cover" />
+                    <img
+                      src={img}
+                      alt={`Slide ${idx + 1}`}
+                      className="h-full w-full object-cover"
+                      loading="lazy"
+                      referrerPolicy="no-referrer"
+                      crossOrigin="anonymous"
+                    />
                   </button>
                 ))}
               </div>
