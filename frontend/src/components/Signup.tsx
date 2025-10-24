@@ -8,6 +8,7 @@ import { Eye, EyeOff, Store } from "lucide-react";
 import { useAlert } from "../context/alert/AlertContext";
 import { useAuth } from "../context/auth/AuthContext";
 import { apiClient } from "../lib/api";
+import { ArrowLeft } from 'lucide-react';
 
 interface FormData {
   email: string;
@@ -104,6 +105,17 @@ export default function Signup() {
 
 
   return (
+    <div>
+      <div className="container mx-auto p-4">
+      <Button
+        onClick={() => navigate('/')}
+        variant="outline"
+        className="flex items-center gap-2"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Back
+      </Button>
+    </div>
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 to-amber-50 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
@@ -221,5 +233,6 @@ export default function Signup() {
         </CardContent>
       </Card>
     </div>
+  </div>
   );
 }
