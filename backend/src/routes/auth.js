@@ -1,5 +1,5 @@
 import { Router } from "express";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { z } from "zod";
 import User from "../models/User.js";
 import { signToken, signRefreshToken, verifyRefreshToken } from "../utils/auth.js";
