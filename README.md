@@ -46,7 +46,28 @@ A modern, AI-powered marketplace connecting local artisans with customers, featu
 - MongoDB (local or cloud)
 - Git
 
-### Backend Setup
+
+### Clone the repo
+```
+git clone https://github.com/Rogshivam/ArtistBazaar.git
+cd ArtistBazaar
+```
+### Using Docker
+Run Container
+```
+docker compose up -d
+```
+Check Running Docker Containers
+```
+docker ps
+```
+Look at the PORTS column
+```
+0.0.0.0:4000 -> 4000/tcp
+```
+
+### Mannual Setup
+#### Backend Setup
 
 1. **Navigate to backend directory**
    ```bash
@@ -80,7 +101,7 @@ A modern, AI-powered marketplace connecting local artisans with customers, featu
    npm run dev
    ```
 
-### Frontend Setup
+#### Frontend Setup
 
 1. **Navigate to frontend directory**
    ```bash
@@ -217,7 +238,6 @@ GET /api/admin/customers
 2. **Build & Deploy**
    ```bash
    npm run build
-   npm start
    ```
 
 ### Frontend Deployment
