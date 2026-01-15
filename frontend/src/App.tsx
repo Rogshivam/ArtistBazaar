@@ -8,7 +8,6 @@ import NotFound from "./pages/NotFound";
 import SellerPage from "./pages/SellerPage";
 import AdminPanel from "./pages/AdminPanel";
 import Login from "@/components/Login";
-// import ChangePassword from "./components/ChangePassword";
 import Signup from "./components/Signup";
 import AlertState from "./context/alert/AlertState";
 import FindSuppliers from "./pages/FindSuppliers";
@@ -33,7 +32,7 @@ import CustomerOrders from "@/pages/CustomerOrders";
 import SellerAnalytics from "@/components/PanelLout/SellerAnalytics";
 import SellerSettings from "@/components/PanelLout/SellerSettings";
 import SellerAbout from "@/components/PanelLout/SellerAbout";
-import SellerProducts from "@/pages/SellerProducts";
+import SellerProducts from "./pages/SellerProducts";
 import CustomerSettings from "@/components/PanelLout/CustomerSettings";
 import SellerChats from "@/components/PanelLout/SellerChats";
 import SellerChatThread from "@/components/PanelLout/SellerChatThread";
@@ -45,14 +44,123 @@ import Security from "@/components/Admin/Security";
 import Users from "@/components/Admin/Users";
 import { AdminLayout } from "@/components/Admin/Layout/AdminLayout";
 import About from "./pages/About";
-// import GoogleCallback from "@/components/GoogleCallback"; // New component for handling Google OAuth callback
 import { Layout } from "./components/PanelLout/Layout";
 import { AuthProvider } from "@/context/auth/AuthContext";
 import ChatThread from "@/pages/ChatThread";
-// import LoadingState from "./context/loading/LoadingState"; // if you also use loading context
 import ServicePanel from "@/pages/ServicePanel";
+import { DrawerProvider, useDrawer } from "./context/DrawerContext/DrawerContext"; 
+import CartSidebar from "@/components/CartSidebar";
+import WishlistDrawer from "@/components/WishlistDrawer";
 
 const queryClient = new QueryClient();
+
+// ✅ Separate component to use useDrawer hook inside DrawerProvider
+const AppContent = () => {
+  const { cartOpen, wishlistOpen, closeCart, closeWishlist } = useDrawer();
+
+  return (
+    <>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AuthProvider>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/products" element={<Products />} />
+              <Route path="/products/:id" element={<ProductDetail />} />
+              <Route path="/artisans" element={<Artisans />} />
+              <Route path="/profile/:id" element={<ProfileView />} />
+              <Route path="/chat/:id" element={<ProtectedRoute roles={["Customer", "Seller", "Services", "Admin"]}><DirectChat /></ProtectedRoute>} />
+              <Route path="/chat" element={<ProtectedRoute roles={["Customer", "Seller", "Services", "Admin"]}><Chat /></ProtectedRoute>} />
+              
+              <Route
+                path="/services/:id"
+                element={
+                  <ProtectedRoute roles={["Services"]}>
+                    <Layout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<ServicePanel />} />
+              </Route>
+
+              <Route
+                path="/seller/:id"
+                element={
+                  <ProtectedRoute roles={["Seller"]}>
+                    <Layout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<SellerDashboard />} />
+                <Route path="home" element={<SellerDashboard />} />
+                <Route path="about" element={<SellerAbout />} />
+                <Route path="dashboard" element={<SellerDashboard />} />
+                <Route path="settings" element={<SellerSettings />} />
+                <Route path="analytics" element={<SellerAnalytics />} />
+                <Route path="services" element={<Services />} />
+                <Route path="products" element={<SellerProducts />} />
+                <Route path="chats" element={<SellerChats />} />
+                <Route path="chats/:conversationId" element={<SellerChatThread />} />
+              </Route>
+
+              <Route
+                path="/customer/:id"
+                element={
+                  <ProtectedRoute roles={["Customer"]}>
+                    <Layout />   
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<CustomerDashboard />} />
+                <Route path="home" element={<CustomerDashboard />} />
+                <Route path="orders" element={<CustomerOrders />} />
+                <Route path="about" element={<AboutCustom />} />
+                <Route path="dashboard" element={<CustomerDashboard />} />
+                <Route path="settings" element={<CustomerSettings />} />
+                <Route path="analytics" element={<Analytics />} />
+                <Route path="services" element={<Services />} />
+                <Route path="suppliers" element={<FindSuppliers />} />
+              </Route>
+
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute roles={["Admin"]}>
+                    <AdminLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<Overview />} />
+                <Route path="overview" element={<Overview />} />
+                <Route path="analytics" element={<AdminAnalytics />} />
+                <Route path="data-entity" element={<DataEntity />} />
+                <Route path="logs" element={<Logs />} />
+                <Route path="security" element={<Security />} />
+                <Route path="data/:entity" element={<DataEntity />} />
+                <Route path="users" element={<Users />} />
+                <Route path="domains" element={<div className="p-6">Domains management coming soon...</div>} />
+                <Route path="code" element={<div className="p-6">Code management coming soon...</div>} />
+                <Route path="settings" element={<div className="p-6">Settings coming soon...</div>} />
+              </Route>
+
+              <Route path="about" element={<About />} />
+              <Route path="/chat/thread/:conversationId" element={<ProtectedRoute roles={["Customer", "Seller", "Services", "Admin"]}><ChatThread /></ProtectedRoute>} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AuthProvider>
+        </BrowserRouter>
+
+        {/* ✅ GLOBAL DRAWERS - Rendered at root level */}
+        <CartSidebar isOpen={cartOpen} onClose={closeCart} />
+        <WishlistDrawer isOpen={wishlistOpen} onClose={closeWishlist} />
+      </TooltipProvider>
+    </>
+  );
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -60,107 +168,9 @@ const App = () => (
       <ProductProvider>
         <CartProvider>
           <WishlistProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
-              <AuthProvider>
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/products" element={<Products />} />
-                  <Route path="/products/:id" element={<ProductDetail />} />
-                  <Route path="/artisans" element={<Artisans />} />
-                  <Route path="/profile/:id" element={<ProfileView />} />
-                  <Route path="/chat/:id" element={<ProtectedRoute roles={["Customer", "Seller", "Services", "Admin"]}><DirectChat /></ProtectedRoute>} />
-                  <Route path="/chat" element={<ProtectedRoute roles={["Customer", "Seller", "Services", "Admin"]}><Chat /></ProtectedRoute>} />
-                  <Route
-                    path="/services/:id"
-                    element={
-                      <ProtectedRoute roles={["Services"]}>
-                        <Layout />
-                      </ProtectedRoute>
-                    }
-                  >
-                    <Route index element={<ServicePanel />} />
-                  </Route>
-                  {/* <Route path="/seller/:id" element={<ProtectedRoute roles={["Seller"]}><SellerPage /></ProtectedRoute>}><Route path="about" element={<About />} /><Route path="/settings" element={<Settings />} /><Route path="/analytics" element={<Analytics />} /></Route> */}
-                  {/* <Route path="/seller/:id" element={<ProtectedRoute roles={["Seller"]}><SellerPage /></ProtectedRoute>} /> */}
-                  {/* Seller Dashboard with Nested Routes */}
-                  <Route
-                    path="/seller/:id"
-                    element={
-                      <ProtectedRoute roles={["Seller"]}>
-                        <Layout />
-                      </ProtectedRoute>
-                    }
-                  >
-                    {/* Nested pages */}
-                    <Route index element={<SellerDashboard />} />
-                    <Route path="home" element={<SellerDashboard />} />
-                    <Route path="about" element={<SellerAbout />} />
-                    <Route path="dashboard" element={<SellerDashboard />} />
-                    <Route path="settings" element={<SellerSettings />} />
-                    <Route path="analytics" element={<SellerAnalytics />} />
-                    <Route path="services" element={<Services />} />
-                    <Route path="products" element={<SellerProducts />} />
-                    <Route path="chats" element={<SellerChats />} />
-                    <Route path="chats/:conversationId" element={<SellerChatThread />} />
-                  </Route>
-                  <Route
-                    path="/customer/:id"
-                    element={
-                      <ProtectedRoute roles={["Customer"]}>
-                        <Layout />   
-                      </ProtectedRoute>
-                    }
-                  >
-                    {/* Nested routes same as seller */}
-                    <Route index element={<CustomerDashboard />} />
-                    <Route path="home" element={<CustomerDashboard />} />
-                    <Route path="orders" element={<CustomerOrders />} />
-                    <Route path="about" element={<AboutCustom />} />
-                    <Route path="dashboard" element={<CustomerDashboard />} />
-                    <Route path="settings" element={<CustomerSettings />} />
-                    <Route path="analytics" element={<Analytics />} />
-                    <Route path="services" element={<Services />} />
-                    <Route path="suppliers" element={<FindSuppliers />} />
-                  </Route>
-                  {/* <Route path="/Customer/:id" element={<ProtectedRoute roles={["Customer"]}><CustomerDashboard /></ProtectedRoute>} />
-                  <Route path="/Customer/suppliers" element={<ProtectedRoute roles={["Customer"]}><FindSuppliers /></ProtectedRoute>} /> */}
-                  {/* <Route path="/admin" element={<ProtectedRoute roles={["Admin"]}><AdminPanel /></ProtectedRoute>} /> */}
-                  <Route
-                    path="/admin"
-                    element={
-                      <ProtectedRoute roles={["Admin"]}>
-                        <AdminLayout />
-                      </ProtectedRoute>
-                    }
-                  >
-                    {/* Default page (index) */}
-                    <Route index element={<Overview />} />
-
-                    {/* Nested pages */}
-                    <Route path="overview" element={<Overview />} />
-                    <Route path="analytics" element={<AdminAnalytics />} />
-                    <Route path="data-entity" element={<DataEntity />} />
-                    <Route path="logs" element={<Logs />} />
-                    <Route path="security" element={<Security />} />
-                    <Route path="data/:entity" element={<DataEntity />} />
-                    <Route path="users" element={<Users />} />
-                    <Route path="domains" element={<div className="p-6">Domains management coming soon...</div>} />
-                    <Route path="code" element={<div className="p-6">Code management coming soon...</div>} />
-                    <Route path="settings" element={<div className="p-6">Settings coming soon...</div>} />
-                  </Route>
-                  <Route path="about" element={<About />} />
-                  <Route path="/chat/thread/:conversationId" element={<ProtectedRoute roles={["Customer", "Seller", "Services", "Admin"]}><ChatThread /></ProtectedRoute>} />
-                  {/* <Route path="/google-callback" element={<GoogleCallback />} /> */}
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/signup" element={<Signup />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-                </AuthProvider>
-              </BrowserRouter>
-            </TooltipProvider>
+            <DrawerProvider>
+              <AppContent />
+            </DrawerProvider>
           </WishlistProvider>
         </CartProvider>
       </ProductProvider>

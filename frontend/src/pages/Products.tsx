@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ProductCard } from "@/components/ProductCard";
 import Navbar from "@/components/Navbar";
 import WishlistDrawer from "@/components/WishlistDrawer";
+import CartSidebar from "@/components/CartSidebar";
 import { AddProductDialog } from "@/components/AddProductDialog";
 import { useProductContext } from "@/context/ProductContext/ProductContext";
 import { useAuth } from "@/context/auth/AuthContext";
@@ -31,6 +32,7 @@ export default function Products() {
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [wishlistOpen, setWishlistOpen] = useState(false);
+  const [CartSidebarOpen, setCartSidebarOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const { user } = useAuth();
 
@@ -55,9 +57,7 @@ export default function Products() {
         <div className="md:col-span-4 flex items-center justify-between mb-2">
           <h1 className="text-xl font-semibold">All Products</h1>
           <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => setWishlistOpen(true)} className="flex items-center gap-2">
-              <Heart className="h-4 w-4" /> Wishlist
-            </Button>
+            
             {user?.role === "Seller" && (
               <Button onClick={() => setAddOpen(true)} className="flex items-center gap-2">
                 <Plus className="h-4 w-4" /> Add Product
@@ -228,16 +228,8 @@ export default function Products() {
           )}
         </main>
 
-        {/* Drawers/Dialogs */}
-        <WishlistDrawer isOpen={wishlistOpen} onClose={() => setWishlistOpen(false)} />
-        <AddProductDialog
-          open={addOpen}
-          onOpenChange={setAddOpen}
-          onSuccess={() => {
-            setAddOpen(false);
-            fetchProducts(1);
-          }}
-        />
+        
+        
       </div>
     </div>
   );

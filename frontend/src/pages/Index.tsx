@@ -107,7 +107,7 @@ const Index = () => {
   }, []);
 
   return (
-    <div className="min-h-screen w-full bg-gradient-subtle">
+    <div className="min-h-screen bg-foreground/5 overflow-x-hidden ">
       <Navbar />
       {/* Floating Chat Button */}
       <div className="fixed bottom-6 right-6 z-50">
@@ -179,7 +179,7 @@ const Index = () => {
         {/* Scrollable horizontal container */}
         <div
           ref={artisanScrollRef}
-          className="flex overflow-x-auto gap-8 py-4 px-2 scroll-smooth snap-x snap-mandatory "
+          className="flex overflow-x-auto gap-4 sm:gap-8 py-4 px-2 overscroll-x-contain scroll-smooth snap-x snap-mandatory "
           style={{ scrollPadding: "0.5rem" }}
         >
           {(artisansLoading ? Array.from({ length: 6 }) : artisans).map((artisan, idx) => (
@@ -270,7 +270,7 @@ const Index = () => {
           {/* Scrollable horizontal container for products */}
           <div
             ref={productScrollRef}
-            className="flex overflow-x-auto gap-8 py-4 px-2 scroll-smooth snap-x snap-mandatory"
+            className="flex overflow-x-auto gap-4 sm:gap-8 py-4 px-2 overscroll-x-contain scroll-smooth snap-x snap-mandatory"
             style={{ scrollPadding: "1rem" }}
           >
             {(productsLoading ? Array.from({ length: 8 }) : products.slice(0, 12)).map((p: any, index: number) => {

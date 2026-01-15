@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate, NavLink, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { HashLink } from 'react-router-hash-link';
 import { Menu, X, ShoppingCart, LogOut, Heart, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,39 +11,46 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-// import Avatar from 'boring-avatars';
 import logo from '../assets/logo-temp.png';
-import CartSidebar from '@/components/CartSidebar';
-import WishlistDrawer from '@/components/WishlistDrawer';
 
 import { useCart } from '@/context/CartContext/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { useAlert } from '@/context/alert/AlertContext';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useDrawer } from '@/context/DrawerContext/DrawerContext'; 
+
 // Types
 interface User {
   name?: string;
   role?: string;
 }
+
 interface NavLink {
   name: string;
   path: string;
   isHash?: boolean;
 }
 
-const Navbar: React.FC = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isCartOpen, setIsCartOpen] = useState(false);
-  const [isWishlistOpen, setIsWishlistOpen] = useState(false);
+interface NavbarProps {
+  onCartOpen?: () => void;
+  onWishlistOpen?: () => void;
+}
 
+const Navbar: React.FC<NavbarProps> = ({ onCartOpen, onWishlistOpen }) => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+
+  // ✅ Use global drawer context
+  const { openCart, openWishlist } = useDrawer();
 
   const { getCartItemCount } = useCart();
   const { getWishlistCount } = useWishlist();
   const { showSuccess } = useAlert();
   const location = useLocation();
-  // const navigate = useNavigate();
+  const navigate = useNavigate();
+  const { id } = useParams();
   const currentHash = location.hash || '#home';
+  const sellerId = localStorage.getItem("sellerId");
 
   // Check auth
   useEffect(() => {
@@ -79,12 +86,6 @@ const Navbar: React.FC = () => {
     { name: 'About', path: '/about', isHash: true },
     ...(user ? [{ name: 'Chat', path: '/chat' }] : []),
   ];
-   // inside your component
-    const { id } = useParams();
-    const navigate = useNavigate();
-    
-    // const sellerId = getSellerId();
-    const sellerId = localStorage.getItem("sellerId");
 
   const renderNavLinks = (isMobile = false) =>
     navLinks.map((link) =>
@@ -94,8 +95,9 @@ const Navbar: React.FC = () => {
           to={link.path}
           smooth
           onClick={() => isMobile && setIsMenuOpen(false)}
-          className={`block text-sm font-medium transition-colors ${currentHash === link.path ? 'text-muted-green' : 'text-beige hover:text-muddy-brown'
-            }`}
+          className={`block text-sm font-medium transition-colors ${
+            currentHash === link.path ? 'text-muted-green' : 'text-beige hover:text-muddy-brown'
+          }`}
         >
           {link.name}
         </HashLink>
@@ -104,8 +106,9 @@ const Navbar: React.FC = () => {
           key={link.path}
           to={link.path}
           onClick={() => isMobile && setIsMenuOpen(false)}
-          className={`block text-sm font-medium transition-colors ${location.pathname === link.path ? 'text-muted-green' : 'text-beige hover:text-muddy-brown'
-            }`}
+          className={`block text-sm font-medium transition-colors ${
+            location.pathname === link.path ? 'text-muted-green' : 'text-beige hover:text-muddy-brown'
+          }`}
         >
           {link.name}
         </Link>
@@ -113,8 +116,8 @@ const Navbar: React.FC = () => {
     );
 
   return (
-    <header className="sticky top-0 left-0 right-0 z-50 backdrop-blur-md shadow-lg bg-foreground/70">
-      <nav className="max-w-screen-xl mx-auto px-4 py-3 flex items-center justify-between">
+    <header className="sticky top-0 inset-x-0 z-50 bg-foreground/80 backdrop-blur-md shadow-md overflow-x-hidden">
+      <nav className="w-full max-w-screen-xl mx-auto px-4 py-3 flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center text-beige font-bold text-lg">
           <img src={logo} alt="Artist Bazaar Logo" className="h-10 w-10 mr-2" />
@@ -124,29 +127,18 @@ const Navbar: React.FC = () => {
         {/* Desktop Nav */}
         <div className="hidden md:flex items-center space-x-6">
           {renderNavLinks()}
-          {!user ? (
-            <>
-              {/* Uncomment if you want to keep these links */}
-              {/* <Link to="/login" className="text-sm font-medium text-beige hover:text-muddy-brown">
-                Login
-              </Link>
-              <Link to="/signup" className="text-sm font-medium text-beige hover:text-muddy-brown">
-                Sign Up
-              </Link> */}
-            </>
-          ) : null}
         </div>
 
         {/* Right Side */}
         <div className="flex items-center space-x-3">
           {user && (
             <>
-              {/* Wishlist */}
+              {/* Wishlist ✅ UPDATED onClick */}
               <Button
                 variant="ghost"
                 size="icon"
                 className="relative text-beige hover:text-muddy-brown"
-                onClick={() => setIsWishlistOpen(true)}
+                onClick={onWishlistOpen || openWishlist} // ✅ Uses prop OR context
                 aria-label="Open wishlist"
               >
                 <Heart className="h-5 w-5" />
@@ -157,12 +149,13 @@ const Navbar: React.FC = () => {
                 )}
               </Button>
 
-              {/* Cart */}
+              {/* Cart ✅ UPDATED onClick */}
               <Button
                 variant="ghost"
                 size="icon"
                 className="relative text-beige hover:text-muddy-brown"
-                onClick={() => setIsCartOpen(true)}
+                onClick={onCartOpen || openCart} // ✅ Uses prop OR context
+                aria-label="Open cart"
               >
                 <ShoppingCart className="h-5 w-5" />
                 {getCartItemCount() > 0 && (
@@ -171,6 +164,7 @@ const Navbar: React.FC = () => {
                   </Badge>
                 )}
               </Button>
+
               {/* Avatar with Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -191,14 +185,14 @@ const Navbar: React.FC = () => {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                                <Link
-                                  to={  `/seller/${sellerId}`} // redirect to seller/:id or login
-                                  className="flex items-center w-full"
-                                >
-                                  <User className="w-4 h-4 mr-2" />
-                                  {sellerId ? "Profile" : "Login"}
-                                </Link>
-                              </DropdownMenuItem>
+                    <Link
+                      to={`/seller/${sellerId}`}
+                      className="flex items-center w-full"
+                    >
+                      <User className="w-4 h-4 mr-2" />
+                      {sellerId ? "Profile" : "Login"}
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
                     <button onClick={handleLogout} className="flex items-center w-full">
@@ -226,31 +220,16 @@ const Navbar: React.FC = () => {
       {isMenuOpen && (
         <div className="md:hidden bg-dark-mud/90 px-4 pb-4 pt-2 space-y-2">
           {renderNavLinks(true)}
-          {!user ? (
-            <>
-              {/* Uncomment if you want to keep these links */}
-              {/* <Link to="/login" onClick={() => setIsMenuOpen(false)} className="block text-sm py-1 font-medium text-beige hover:text-muddy-brown">
-                Login
-              </Link>
-              <Link to="/signup" onClick={() => setIsMenuOpen(false)} className="block text-sm py-1 font-medium text-beige hover:text-muddy-brown">
-                Sign Up
-              </Link> */}
-            </>
-          ) : (
+          {!user ? null : (
             <button
               onClick={handleLogout}
               className="block text-sm py-1 font-medium text-beige hover:text-muddy-brown"
-            >
-              {/* <LogOut className="w-4 h-4 inline mr-1" /> */}
-              {/* Logout */}
-            </button>
+            />
           )}
         </div>
       )}
 
-      {/* Drawers */}
-      <CartSidebar isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
-      <WishlistDrawer isOpen={isWishlistOpen} onClose={() => setIsWishlistOpen(false)} />
+      {/* ✅ Drawers REMOVED - handled globally in App.tsx */}
     </header>
   );
 };

@@ -140,7 +140,7 @@ userSchema.index({ name: 1 });
 // Pre-save hook for password hashing (if modified)
 userSchema.pre("save", async function (next) {
   if (this.isModified("passwordHash") && this.passwordHash) {
-    const bcrypt = await import("bcrypt");
+    const bcrypt = await import("bcryptjs");
     this.passwordHash = await bcrypt.hash(this.passwordHash, 10);
   }
   next();
@@ -154,7 +154,7 @@ userSchema.virtual('isLocked').get(function() {
 // Method to compare passwords
 userSchema.methods.comparePassword = async function (candidatePassword) {
   if (!this.passwordHash) return false;
-  const bcrypt = await import("bcrypt");
+  const bcrypt = await import("bcryptjs");
   return await bcrypt.compare(candidatePassword, this.passwordHash);
 };
 

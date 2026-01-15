@@ -122,7 +122,6 @@ Look at the PORTS column
    ```bash
    npm run dev
    ```
-
 ## 🔐 Authentication System
 
 ### User Roles
