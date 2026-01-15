@@ -318,7 +318,13 @@ npm test
 
 ## 🆘 Support
 
-For support, email shivamdevthakur@gmail.com or create an issue in the GitHub repository.
+For support:
+
+Email: shivamdevthakur@gmail.com
+
+Email: souravbhardwaj2005@gmail.com
+
+Or open an issue on the GitHub repository.
 
 ## 🎯 Roadmap
 
