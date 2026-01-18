@@ -358,6 +358,13 @@ class ApiService {
     });
   }
 
+  async uploadImagesByUrl(urls: string[]) {
+    return this.request('/api/upload/images/by-url', {
+      method: 'POST',
+      body: JSON.stringify({ urls }),
+    });
+  }
+
   async deleteImage(publicId: string) {
     return this.request(`/api/upload/image/${publicId}`, {
       method: 'DELETE',

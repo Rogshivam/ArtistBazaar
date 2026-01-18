@@ -106,21 +106,29 @@ export function AddProductDialog({ open, onOpenChange, onSuccess }: AddProductDi
     }
 
     try {
-      // 1) Upload images to backend (Cloudinary) to get URLs
-      let imageUrls: string[] = [];
+      // 1) Upload images to backend (Cloudinary) to get imagesData with publicId
+      let imagesData: Array<{ publicId: string; url: string; width?: number; height?: number; format?: string; size?: number; }> = [];
       if (imageMode === 'upload' && images.length > 0) {
         const uploadRes = await apiService.uploadImages(images as any);
         const uploaded = (uploadRes as any).images || [];
-        imageUrls = uploaded.map((img: any) => img.url).filter(Boolean);
+        imagesData = [...imagesData, ...uploaded];
       }
 
-      // 1b) Parse optional image URL(s) input (comma-separated allowed)
-      const manualUrls = (imageMode === 'url' ? imageUrl : "")
-        .split(',')
-        .map((u) => u.trim())
-        .filter(Boolean)
-        .filter((u) => /^https?:\/\//i.test(u));
-      imageUrls = [...imageUrls, ...manualUrls];
+      // 1b) If URL mode, send URLs to backend to upload to Cloudinary and get imagesData
+      if (imageMode === 'url') {
+        const urls = imageUrl
+          .split(',')
+          .map((u) => u.trim())
+          .filter(Boolean)
+          .filter((u) => /^https?:\/\//i.test(u));
+        if (urls.length) {
+          const byUrlRes = await apiService.uploadImagesByUrl(urls);
+          const uploadedByUrl = (byUrlRes as any).images || [];
+          imagesData = [...imagesData, ...uploadedByUrl];
+        }
+      }
+
+      const imageUrls = imagesData.map((x) => x.url).filter(Boolean);
 
       // 2) Build payload for product creation
       const payload = {
@@ -128,8 +136,9 @@ export function AddProductDialog({ open, onOpenChange, onSuccess }: AddProductDi
         price: Number(formData.price),
         stock: formData.stock ? Number(formData.stock) : 0,
         tags: Array.isArray(formData.tags) ? formData.tags : [],
-        image: imageUrls[0], // associate primary image explicitly
-        images: imageUrls, // backend createSchema expects array of strings
+        image: imageUrls[0],
+        images: imageUrls,
+        imagesData,
       } as any;
 
       const result = await apiService.createProduct(payload);

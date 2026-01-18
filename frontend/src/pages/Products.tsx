@@ -184,7 +184,7 @@ export default function Products() {
             </div>
           ) : products.length ? (
             <div className="grid grid-cols-2 md:grid-cols-3 gap-6 text-xs sm:text-sm md:text-base overflow-hidden">
-              {products.map((p) => (
+              {/* {products.map((p) => (
                 <ProductCard
                   key={p._id}
                   id={p._id}
@@ -196,7 +196,22 @@ export default function Products() {
                   image={p.images?.[0] || p.image || p.imagesData?.[0]?.url}
                   tags={p.tags}
                 />
+              ))} */}
+              {products.map(product => (
+                <ProductCard
+                  key={product._id}
+                  id={product._id}
+                  name={product.name}
+                  price={product.price}
+                  artisan={product.seller?.name || 'Artisan'}
+                  location={product.category}
+                  story={product.description || ''}
+                  image={product.images?.[0]}      // Primary
+                  images={product.images || []}    // Full array
+                  tags={product.tags || []}
+                />
               ))}
+
             </div>
           ) : (
             <div className="text-center text-muted-foreground mt-20 overflow-hidden">
@@ -227,9 +242,15 @@ export default function Products() {
             </div>
           )}
         </main>
-
-        
-        
+        {/* Drawers/Dialogs */}
+        <AddProductDialog
+          open={addOpen}
+          onOpenChange={setAddOpen}
+          onSuccess={() => {
+            setAddOpen(false);
+            fetchProducts(1);
+          }}
+        />
       </div>
     </div>
   );

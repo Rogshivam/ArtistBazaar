@@ -67,12 +67,52 @@ export const deleteImage = async (publicId) => {
   }
 };
 
+// Utility function to add tags to images by public IDs
+export const tagImages = async (publicIds = [], tags = []) => {
+  if (!Array.isArray(publicIds) || publicIds.length === 0) return { updated: 0 };
+  try {
+    const tagStr = Array.isArray(tags) && tags.length ? tags.join(',') : undefined;
+    const res = await cloudinary.api.update(publicIds, { tags: tagStr });
+    return res;
+  } catch (error) {
+    console.error('Error tagging images in Cloudinary:', error);
+    // Do not throw to avoid failing product creation because tagging failed
+    return { error: error.message };
+  }
+};
+
 // Utility function to get image URL with transformations
 export const getImageUrl = (publicId, transformations = {}) => {
   return cloudinary.url(publicId, {
     ...transformations,
     secure: true
   });
+};
+
+// Utility function to upload an image by remote URL
+export const uploadImageByUrl = async (url, options = {}) => {
+  try {
+    const res = await cloudinary.uploader.upload(url, {
+      folder: 'artist-bazaar',
+      allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+      transformation: [
+        { width: 800, height: 600, crop: 'limit' },
+        { quality: 'auto' }
+      ],
+      ...options,
+    });
+    return {
+      publicId: res.public_id,
+      url: res.secure_url,
+      width: res.width,
+      height: res.height,
+      format: res.format,
+      size: res.bytes,
+    };
+  } catch (error) {
+    console.error('Error uploading image by URL to Cloudinary:', error);
+    throw error;
+  }
 };
 
 export default cloudinary;

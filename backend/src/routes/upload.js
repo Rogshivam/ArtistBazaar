@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { upload, deleteImage } from "../utils/cloudinary.js";
+import { upload, deleteImage, uploadImageByUrl } from "../utils/cloudinary.js";
 import { requireAuth } from "../utils/auth.js";
 
 const r = Router();
@@ -12,8 +12,8 @@ r.post("/image", requireAuth(), upload.single('image'), async (req, res) => {
     }
 
     const imageData = {
-      publicId: req.file.public_id,
-      url: req.file.secure_url,
+      publicId: req.file.filename, // multer-storage-cloudinary
+      url: req.file.path,          // secure URL
       width: req.file.width,
       height: req.file.height,
       format: req.file.format,
@@ -42,8 +42,8 @@ r.post("/images", requireAuth(), upload.array('images', 10), async (req, res) =>
     }
 
     const imagesData = req.files.map(file => ({
-      publicId: file.public_id,
-      url: file.secure_url,
+      publicId: file.filename,
+      url: file.path,
       width: file.width,
       height: file.height,
       format: file.format,
@@ -61,6 +61,25 @@ r.post("/images", requireAuth(), upload.array('images', 10), async (req, res) =>
       message: "Failed to upload images",
       error: error.message 
     });
+  }
+});
+
+// Upload images by remote URLs
+r.post("/images/by-url", requireAuth(), async (req, res) => {
+  try {
+    const { urls } = req.body || {};
+    if (!Array.isArray(urls) || urls.length === 0) {
+      return res.status(400).json({ message: "No image URLs provided" });
+    }
+    const valid = urls.filter(u => typeof u === 'string' && /^https?:\/\//i.test(u));
+    if (valid.length === 0) {
+      return res.status(400).json({ message: "Invalid image URLs" });
+    }
+    const uploads = await Promise.all(valid.map((u) => uploadImageByUrl(u)));
+    res.json({ success: true, images: uploads, message: `${uploads.length} images uploaded by URL` });
+  } catch (error) {
+    console.error("Images by URL upload error:", error);
+    res.status(500).json({ message: "Failed to upload images by URL", error: error.message });
   }
 });
 

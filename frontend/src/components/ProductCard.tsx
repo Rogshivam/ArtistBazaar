@@ -125,6 +125,23 @@ export function ProductCard({
       {/* Image Section */}
       <div className="aspect-square bg-gradient-subtle rounded-t-lg flex items-center justify-center text-6xl relative overflow-hidden">
         {candidates[imgIndex] ? (
+          // <img
+          //   src={candidates[imgIndex]}
+          //   alt={name}
+          //   className="w-full h-full object-cover"
+          //   loading="lazy"
+          //   referrerPolicy="no-referrer"
+          //   crossOrigin="anonymous"
+          //   onError={(e) => {
+          //     // Try next candidate; if none left, show emoji
+          //     if (imgIndex + 1 < candidates.length) {
+          //       setImgIndex((i) => i + 1);
+          //     } else {
+          //       e.currentTarget.style.display = 'none';
+          //       e.currentTarget.nextElementSibling?.classList.remove('hidden');
+          //     }
+          //   }}
+          // />
           <img
             src={candidates[imgIndex]}
             alt={name}
@@ -132,13 +149,16 @@ export function ProductCard({
             loading="lazy"
             referrerPolicy="no-referrer"
             crossOrigin="anonymous"
+            // Add Cloudinary quality param for better loading
             onError={(e) => {
-              // Try next candidate; if none left, show emoji
+              const target = e.currentTarget as HTMLImageElement;
+              // Try Cloudinary auto quality/format first
+              if (target.src.includes('cloudinary.com')) {
+                target.src = target.src.replace(/\/upload\/([^\/]*)\//, '/upload/q_auto,f_auto,fl_lossy/$1/');
+              }
+              // Then fallback logic...
               if (imgIndex + 1 < candidates.length) {
                 setImgIndex((i) => i + 1);
-              } else {
-                e.currentTarget.style.display = 'none';
-                e.currentTarget.nextElementSibling?.classList.remove('hidden');
               }
             }}
           />
