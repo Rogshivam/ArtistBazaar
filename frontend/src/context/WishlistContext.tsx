@@ -13,6 +13,23 @@ interface WishlistItem {
   addedAt: Date;
 }
 
+interface ApiWishlistProduct {
+  _id: string;
+  name: string;
+  price: number;
+  images?: string[];
+  category?: string;
+}
+
+interface ApiWishlistResponseItem {
+  product: ApiWishlistProduct | null;
+  createdAt: string;
+}
+
+interface ApiWishlistResponse {
+  items: ApiWishlistResponseItem[];
+}
+
 interface WishlistContextType {
   wishlist: WishlistItem[];
   addToWishlist: (productId: string, product?: WishlistItem['product']) => Promise<void>;
@@ -60,11 +77,16 @@ export const WishlistProvider: React.FC<WishlistProviderProps> = ({ children }) 
       setIsLoading(true);
       setError(null);
       const data = await apiService.getWishlist();
-      const wishlistItems = data.items.map((item: any) => ({
-        productId: item.product._id,
-        product: item.product,
-        addedAt: new Date(item.createdAt)
-      }));
+      const wishlistItems = (data.items ?? [])
+        .map((item: ApiWishlistResponseItem) => {
+          if (!item?.product?._id) return null;
+          return {
+            productId: item.product._id,
+            product: item.product,
+            addedAt: new Date(item.createdAt),
+          } as WishlistItem;
+        })
+        .filter((x): x is WishlistItem => x !== null);
       setWishlist(wishlistItems);
     } catch (error: any) {
       console.error('Failed to load wishlist:', error);

@@ -191,6 +191,11 @@ class ApiService {
     // return this.request('/api/products/seller/products');
     return this.request('/api/seller/products');
   }
+  //made for services
+  async getServiceProducts() {
+    // return this.request('/api/products/seller/products');
+    return this.request('/api/seller/products');
+  }
 
   // Artisan detail (profile + overview + trust + catalog)
   async getArtisanDetail(id: string, params: {
@@ -242,11 +247,21 @@ class ApiService {
 
   // Wishlist endpoints
   async getWishlist() {
-    return this.request('/api/wishlist');
+    return this.request<{
+      items: {
+        product: { _id: string; name: string; price: number; images?: string[]; category?: string } | null;
+        createdAt: string;
+      }[];
+    }>('/api/wishlist');
   }
 
   async addToWishlist(productId: string) {
-    return this.request('/api/wishlist/add', {
+    return this.request<{
+      item: {
+        product: { _id: string; name: string; price: number; images?: string[]; category?: string } | null;
+        createdAt: string;
+      };
+    }>('/api/wishlist/add', {
       method: 'POST',
       body: JSON.stringify({ productId }),
     });

@@ -19,48 +19,69 @@ interface User {
   role?: string;
 }
 
-export function DashboardHeader() {
+export function CustomerDashboardHeader() {
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const { showSuccess } = useAlert();
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>(); // ✅ Customer ID from URL
 
-  // const sellerId = localStorage.getItem("sellerId"); // ✅ fetch sellerId here
- const sellerId = localStorage.getItem("sellerId");
-
-  // Check auth state
   useEffect(() => {
     const checkAuth = () => {
       const token = localStorage.getItem("auth-token");
       const userData = localStorage.getItem("user-data");
 
-      if (token && userData) {
+      if (token && userData && id) {
         try {
           const parsedUser = JSON.parse(userData);
-          setUser({
-            name: parsedUser.name || "User",
-            role: parsedUser.role || "Customer",
-          });
+          if (parsedUser.role === "Customer") {
+            setUser({
+              name: parsedUser.name || "Customer",
+              role: "Customer",
+            });
+          } else {
+            setUser(null);
+            navigate("/login", { replace: true });
+          }
         } catch {
           setUser(null);
+          navigate("/login", { replace: true });
         }
       } else {
         setUser(null);
+        navigate("/login", { replace: true });
       }
+      setIsLoading(false);
     };
 
     checkAuth();
     window.addEventListener("storage", checkAuth);
     return () => window.removeEventListener("storage", checkAuth);
-  }, []);
+  }, [id, navigate]);
 
   const handleLogout = () => {
     localStorage.removeItem("auth-token");
     localStorage.removeItem("user-data");
-    localStorage.removeItem("sellerId"); // ✅ clear sellerId only
     setUser(null);
     showSuccess("Logged out successfully");
     navigate("/login");
   };
+
+  if (isLoading) {
+    return (
+      <header className="h-16 bg-card/50 backdrop-blur border-b border-border/50 flex items-center px-6">
+        <div className="flex items-center gap-4 flex-1">
+          <SidebarTrigger />
+          <div className="w-80 h-10 bg-muted rounded-md animate-pulse" />
+        </div>
+        <div className="w-24 h-10 bg-muted rounded-md animate-pulse" />
+      </header>
+    );
+  }
+
+  if (!user || !id) {
+    return null;
+  }
 
   return (
     <header className="h-16 bg-card/50 backdrop-blur border-b border-border/50 flex items-center justify-between px-6">
@@ -69,7 +90,7 @@ export function DashboardHeader() {
         <div className="relative w-80">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search products, orders, suppliers..."
+            placeholder="Search orders, suppliers, products..."
             className="pl-10 bg-background/60"
           />
         </div>
@@ -87,42 +108,33 @@ export function DashboardHeader() {
             <Button
               variant="ghost"
               className="relative h-10 w-10 rounded-full"
-              aria-label="User menu"
+              aria-label="Customer menu"
             >
               <Avatar className="h-10 w-10">
-                <AvatarImage
-                  src="/placeholder.svg"
-                  alt={user?.name || "User"}
-                />
+                <AvatarImage src="/placeholder.svg" alt={user.name || "Customer"} />
                 <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-white">
-                  {user?.name ? user.name.slice(0, 2).toUpperCase() : "JD"}
+                  {user.name ? user.name.slice(0, 2).toUpperCase() : "CU"}
                 </AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent
-            className="w-48 bg-card/90 backdrop-blur-md text-foreground"
-            align="end"
-          >
+          <DropdownMenuContent className="w-48 bg-card/90 backdrop-blur-md text-foreground" align="end">
             <DropdownMenuItem asChild>
               <Link to="/" className="flex items-center w-full">
                 <Home className="w-4 h-4 mr-2" />
                 Home
               </Link>
             </DropdownMenuItem>
-
             <DropdownMenuItem asChild>
               <Link
-                to={sellerId ? `/seller/${sellerId}` : "/login"} // ✅ redirect correctly
+                to={`/customer/${id}/dashboard`}
                 className="flex items-center w-full"
               >
                 <User className="w-4 h-4 mr-2" />
-                Profile
+                Dashboard
               </Link>
             </DropdownMenuItem>
-
             <DropdownMenuSeparator />
-
             <DropdownMenuItem asChild>
               <button onClick={handleLogout} className="flex items-center w-full">
                 <LogOut className="w-4 h-4 mr-2" />

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Layout } from "@/components/PanelLout/Layout";
+import { CustomerLayout } from "@/components/customer/Layout/CustomerLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -108,8 +108,8 @@ export default function FindSuppliers() {
   const [favorites, setFavorites] = useState<number[]>([]);
 
   const toggleFavorite = (supplierId: number) => {
-    setFavorites(prev => 
-      prev.includes(supplierId) 
+    setFavorites(prev =>
+      prev.includes(supplierId)
         ? prev.filter(id => id !== supplierId)
         : [...prev, supplierId]
     );
@@ -117,20 +117,20 @@ export default function FindSuppliers() {
 
   const filteredSuppliers = suppliers.filter(supplier => {
     const matchesSearch = supplier.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         supplier.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = !categoryFilter || supplier.categories.some(cat => 
+      supplier.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = !categoryFilter || supplier.categories.some(cat =>
       cat.toLowerCase().includes(categoryFilter.toLowerCase())
     );
     const matchesLocation = !locationFilter || supplier.location.toLowerCase().includes(locationFilter.toLowerCase());
-    const matchesCertification = !certificationFilter || supplier.certifications.some(cert => 
+    const matchesCertification = !certificationFilter || supplier.certifications.some(cert =>
       cert.toLowerCase().includes(certificationFilter.toLowerCase())
     );
-    
+
     return matchesSearch && matchesCategory && matchesLocation && matchesCertification;
   });
 
   return (
-    <Layout>
+    
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Find Suppliers</h1>
@@ -155,7 +155,7 @@ export default function FindSuppliers() {
                 className="pl-10"
               />
             </div>
-            
+
             <div className="grid gap-4 md:grid-cols-3">
               <div className="space-y-2">
                 <Label>Category</Label>
@@ -164,7 +164,7 @@ export default function FindSuppliers() {
                     <SelectValue placeholder="All categories" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All categories</SelectItem>
+                    <SelectItem value="all">All categories</SelectItem>       
                     <SelectItem value="industrial">Industrial Equipment</SelectItem>
                     <SelectItem value="automation">Automation</SelectItem>
                     <SelectItem value="electronics">Electronics</SelectItem>
@@ -181,7 +181,7 @@ export default function FindSuppliers() {
                     <SelectValue placeholder="All locations" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All locations</SelectItem>
+                    <SelectItem value="all">All locations</SelectItem>        
                     <SelectItem value="usa">USA</SelectItem>
                     <SelectItem value="germany">Germany</SelectItem>
                     <SelectItem value="japan">Japan</SelectItem>
@@ -197,7 +197,7 @@ export default function FindSuppliers() {
                     <SelectValue placeholder="Any certification" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Any certification</SelectItem>
+                    <SelectItem value="all">Any certification</SelectItem>    
                     <SelectItem value="iso">ISO 9001</SelectItem>
                     <SelectItem value="ce">CE Certified</SelectItem>
                     <SelectItem value="asme">ASME</SelectItem>
@@ -366,6 +366,6 @@ export default function FindSuppliers() {
           </div>
         </div>
       </div>
-    </Layout>
+    
   );
 }

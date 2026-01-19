@@ -16,6 +16,7 @@ interface ApiProduct {
   tags?: string[];
   artisan?: string;
   location?: string;
+  seller?: { name?: string };
 }
 
 interface ProductListResponse {

@@ -149,26 +149,26 @@ export default function ProductDetail() {
     }
   };
 
-  // const toggleWishlist = async () => {
-  //   if (!product) return;
+  const toggleWishlist = async () => {
+    if (!product) return;
     
-  //   try {
-  //     if (isInWishlist(product._id)) {
-  //       await removeFromWishlist(product._id);
-  //       showSuccess('Removed from wishlist');
-  //     } else {
-  //       await addToWishlist(product._id, {
-  //         _id: product._id,
-  //         name: product.name,
-  //         price: product.price,
-  //         category: product.category || '',
-  //       });
-  //       showSuccess('Added to wishlist');
-  //     }
-  //   } catch (err: any) {
-  //     showError(err.message || 'Failed to update wishlist');
-  //   }
-  // };
+    try {
+      if (isInWishlist(product._id)) {
+        await removeFromWishlist(product._id);
+        showSuccess('Removed from wishlist');
+      } else {
+        await addToWishlist(product._id, {
+          _id: product._id,
+          name: product.name,
+          price: product.price,
+          category: product.category || '',
+        });
+        showSuccess('Added to wishlist');
+      }
+    } catch (err: any) {
+      showError(err.message || 'Failed to update wishlist');
+    }
+  };
 
   if (loading) {
     return (
@@ -322,7 +322,7 @@ export default function ProductDetail() {
             </div>
           </div>
 
-          {/* <div className="flex flex-col sm:flex-row gap-4 pt-4">
+          <div className="flex flex-col sm:flex-row gap-4 pt-4">
             <Button 
               size="lg" 
               className="flex-1 bg-primary hover:bg-primary/90"
@@ -342,7 +342,7 @@ export default function ProductDetail() {
               />
               {isInWishlist(product._id) ? 'In Wishlist' : 'Add to Wishlist'}
             </Button>
-          </div> */}
+          </div>
         </div>
       </div>
 

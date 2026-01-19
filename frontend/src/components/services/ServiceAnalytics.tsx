@@ -25,7 +25,7 @@ interface AnalyticsData {
   recentActivity: any[];
 }
 
-export default function SellerAnalytics() {
+export default function ServiceAnalytics() {
   const { user } = useAuth();
   const [analytics, setAnalytics] = useState<AnalyticsData>({
     totalViews: 0,
@@ -44,8 +44,8 @@ export default function SellerAnalytics() {
       try {
         setLoading(true);
         
-        // Fetch seller's products for analytics
-        const productsData = await apiService.getSellerProducts();
+        // Fetch Services all products for analytics
+        const productsData: any = await apiService.getServiceProducts();
         const products = productsData.products || [];
         
         // Calculate analytics

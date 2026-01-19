@@ -1,15 +1,16 @@
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { Sidebar } from "@/components/PanelLout/Sidebar";
-import { DashboardHeader } from "@/components/PanelLout/DashboardHeader";
+import { ServiceSidebar } from "@/components/services/Layout/ServiceSidebar";
+import { ServiceDashboardHeader } from "@/components/services/Layout/ServiceDashboardHeader";
 import { Outlet } from "react-router-dom";
 
-export function Layout() {
+
+export function ServiceLayout() {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gradient-to-br from-background to-slate-50/50">
-        <Sidebar />
+        <ServiceSidebar />
         <div className="flex-1 flex flex-col">
-          <DashboardHeader />
+          <ServiceDashboardHeader />
           <main className="flex-1 overflow-auto">
          <Outlet /> {/* ✅ nested route content goes here */}
        </main>

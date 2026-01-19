@@ -1,16 +1,20 @@
 import { useAuth } from "@/context/auth/AuthContext";
-import SellerDashboard from "./SellerDashboard";
-import CustomerDashboard from "./CustomerDashboard";
-
+import SellerDashboard from "../../seller/SellerDashboard";
+import CustomerDashboard from "../CustomerDashboard";
+import Login from "../../Login";
+import  { Link } from "react-router-dom";
 export default function Dashboard() {
   const { user } = useAuth();
 
   // Render different dashboards based on user role
-  if (user?.role === "Seller") {
-    return <SellerDashboard />;
-  } else if (user?.role === "Customer") {
+  if (user?.role === "Customer") {
     return <CustomerDashboard />;
-  }
+  } else {
+  // Navigate to login OR show access denied
+  return <Link to="/login" replace />;
+  // OR
+  // return <Login />;
+}
 
   // Default fallback
   return (

@@ -6,11 +6,12 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import SellerPage from "./pages/SellerPage";
-import AdminPanel from "./pages/AdminPanel";
+// import AdminPanel from "./pages/AdminPanel";
+import { CustomerLayout } from "./components/customer/Layout/CustomerLayout";
 import Login from "@/components/Login";
 import Signup from "./components/Signup";
 import AlertState from "./context/alert/AlertState";
-import FindSuppliers from "./pages/FindSuppliers";
+import FindSuppliers from "./components/customer/FindSuppliers";
 import Products from "./pages/Products";
 import ProductDetail from "./pages/ProductDetail";
 import Artisans from "./pages/Artisans";
@@ -21,21 +22,33 @@ import { WishlistProvider } from "./context/WishlistContext";
 import { ProductProvider } from "./context/ProductContext/ProductContext";
 import ProfileView from "./pages/ProfileView";
 import DirectChat from "./pages/DirectChat";
-import AboutCustom from "@/components/PanelLout/About";
-import Analytics from "@/components/PanelLout/Analytics";
 import Settings from "@/components/PanelLout/Settings";
-import Services from "@/components/PanelLout/Services";
-import Dashboard from "@/components/PanelLout/Dashboard";
-import SellerDashboard from "@/components/PanelLout/SellerDashboard";
-import CustomerDashboard from "@/components/PanelLout/CustomerDashboard";
-import CustomerOrders from "@/pages/CustomerOrders";
-import SellerAnalytics from "@/components/PanelLout/SellerAnalytics";
-import SellerSettings from "@/components/PanelLout/SellerSettings";
-import SellerAbout from "@/components/PanelLout/SellerAbout";
+import AboutCustom from "@/components/customer/CustomerAbout";
+import Analytics from "@/components/customer/CustomerAnalytics";
+import CustomerOrders from "@/components/customer/CustomerOrders";
+import ServicePanel from "@/components/customer/CustomerServicePanel";
+import ServiceServicePanel from "@/components/customer/CustomerServicePanel";
+import CustomerDashboard from "@/components/customer/CustomerDashboard";
+import CustomerSettings from "@/components/customer/CustomerSettings";
+
+import Dashboard from "@/components/customer/Layout/CustomerDashboard";
+import Services from "@/components/services/Services";
+import SellerDashboard from "@/components/seller/SellerDashboard";
+import SellerAnalytics from "@/components/seller/SellerAnalytics";
+import SellerSettings from "@/components/seller/SellerSettings";
+import SellerAbout from "@/components/seller/SellerAbout";
 import SellerProducts from "./pages/SellerProducts";
-import CustomerSettings from "@/components/PanelLout/CustomerSettings";
-import SellerChats from "@/components/PanelLout/SellerChats";
-import SellerChatThread from "@/components/PanelLout/SellerChatThread";
+import SellerChats from "@/components/seller/SellerChats";
+import SellerChatThread from "@/components/seller/SellerChatThread";
+import { SellerLayout } from "@/components/seller/Layout/SellerLayout"
+import ServiceDashboard from "@/components/services/ServiceDashboard";
+import ServiceAnalytics from "@/components/services/ServiceAnalytics";
+import ServiceSettings from "@/components/services/ServiceSettings";
+import ServiceAbout from "@/components/services/ServiceAbout";
+import ServiceProducts from "./pages/SellerProducts";
+import ServiceChats from "@/components/services/ServiceChats";
+import ServiceChatThread from "@/components/services/ServiceChatThread";
+import { ServiceLayout } from "@/components/services/Layout/ServiceLayout"
 import AdminAnalytics from "@/components/Admin/AdminAnalytics";
 import Overview from "@/components/Admin/Overview";
 import DataEntity from "@/components/Admin/DataEntity";
@@ -43,12 +56,10 @@ import Logs from "@/components/Admin/Logs";
 import Security from "@/components/Admin/Security";
 import Users from "@/components/Admin/Users";
 import { AdminLayout } from "@/components/Admin/Layout/AdminLayout";
-import About from "./pages/About";
-import { Layout } from "./components/PanelLout/Layout";
+import About from "@/pages/About";
 import { AuthProvider } from "@/context/auth/AuthContext";
 import ChatThread from "@/pages/ChatThread";
-import ServicePanel from "@/pages/ServicePanel";
-import { DrawerProvider, useDrawer } from "./context/DrawerContext/DrawerContext"; 
+import { DrawerProvider, useDrawer } from "./context/DrawerContext/DrawerContext";
 import CartSidebar from "@/components/CartSidebar";
 import WishlistDrawer from "@/components/WishlistDrawer";
 
@@ -73,56 +84,6 @@ const AppContent = () => {
               <Route path="/profile/:id" element={<ProfileView />} />
               <Route path="/chat/:id" element={<ProtectedRoute roles={["Customer", "Seller", "Services", "Admin"]}><DirectChat /></ProtectedRoute>} />
               <Route path="/chat" element={<ProtectedRoute roles={["Customer", "Seller", "Services", "Admin"]}><Chat /></ProtectedRoute>} />
-              
-              <Route
-                path="/services/:id"
-                element={
-                  <ProtectedRoute roles={["Services"]}>
-                    <Layout />
-                  </ProtectedRoute>
-                }
-              >
-                <Route index element={<ServicePanel />} />
-              </Route>
-
-              <Route
-                path="/seller/:id"
-                element={
-                  <ProtectedRoute roles={["Seller"]}>
-                    <Layout />
-                  </ProtectedRoute>
-                }
-              >
-                <Route index element={<SellerDashboard />} />
-                <Route path="home" element={<SellerDashboard />} />
-                <Route path="about" element={<SellerAbout />} />
-                <Route path="dashboard" element={<SellerDashboard />} />
-                <Route path="settings" element={<SellerSettings />} />
-                <Route path="analytics" element={<SellerAnalytics />} />
-                <Route path="services" element={<Services />} />
-                <Route path="products" element={<SellerProducts />} />
-                <Route path="chats" element={<SellerChats />} />
-                <Route path="chats/:conversationId" element={<SellerChatThread />} />
-              </Route>
-
-              <Route
-                path="/customer/:id"
-                element={
-                  <ProtectedRoute roles={["Customer"]}>
-                    <Layout />   
-                  </ProtectedRoute>
-                }
-              >
-                <Route index element={<CustomerDashboard />} />
-                <Route path="home" element={<CustomerDashboard />} />
-                <Route path="orders" element={<CustomerOrders />} />
-                <Route path="about" element={<AboutCustom />} />
-                <Route path="dashboard" element={<CustomerDashboard />} />
-                <Route path="settings" element={<CustomerSettings />} />
-                <Route path="analytics" element={<Analytics />} />
-                <Route path="services" element={<Services />} />
-                <Route path="suppliers" element={<FindSuppliers />} />
-              </Route>
 
               <Route
                 path="/admin"
@@ -143,6 +104,65 @@ const AppContent = () => {
                 <Route path="domains" element={<div className="p-6">Domains management coming soon...</div>} />
                 <Route path="code" element={<div className="p-6">Code management coming soon...</div>} />
                 <Route path="settings" element={<div className="p-6">Settings coming soon...</div>} />
+              </Route>
+
+              <Route
+                path="/services/:id"
+                element={
+                  <ProtectedRoute roles={["Services"]}>
+                    <ServiceLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<ServiceServicePanel />} />
+                <Route path="home" element={<ServiceServicePanel />} />
+                <Route path="about" element={<ServiceAbout />} />
+                <Route path="dashboard" element={<ServiceDashboard />} />
+                <Route path="settings" element={<ServiceSettings />} />
+                <Route path="analytics" element={<ServiceAnalytics />} />
+                <Route path="services" element={<Services />} />
+                <Route path="products" element={<ServiceProducts />} />
+                <Route path="chats" element={<ServiceChats />} />
+                <Route path="chats/:conversationId" element={<ServiceChatThread />} />
+              </Route>
+              <Route
+                path="/seller/:id"
+                element={
+                  <ProtectedRoute roles={["Seller"]}>
+                    <SellerLayout />
+                  </ProtectedRoute>
+                }
+              >
+
+                <Route index element={<SellerDashboard />} />
+                <Route path="home" element={<SellerDashboard />} />
+                <Route path="about" element={<SellerAbout />} />
+                <Route path="dashboard" element={<SellerDashboard />} />
+                <Route path="settings" element={<SellerSettings />} />
+                <Route path="analytics" element={<SellerAnalytics />} />
+                <Route path="services" element={<Services />} />
+                <Route path="products" element={<SellerProducts />} />
+                <Route path="chats" element={<SellerChats />} />
+                <Route path="chats/:conversationId" element={<SellerChatThread />} />
+              </Route>
+
+              <Route
+                path="/customer/:id"
+                element={
+                  <ProtectedRoute roles={["Customer"]}>
+                    <CustomerLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<CustomerDashboard  />} />
+                <Route path="home" element={<CustomerDashboard />} />
+                <Route path="orders" element={<CustomerOrders />} />
+                <Route path="about" element={<AboutCustom />} />
+                <Route path="dashboard" element={<CustomerDashboard />} />
+                <Route path="settings" element={<CustomerSettings />} />
+                <Route path="analytics" element={<Analytics />} />
+                <Route path="services" element={<Services />} />
+                <Route path="suppliers" element={<FindSuppliers />} />
               </Route>
 
               <Route path="about" element={<About />} />
