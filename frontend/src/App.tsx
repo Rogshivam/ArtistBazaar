@@ -30,7 +30,6 @@ import ServicePanel from "@/components/customer/CustomerServicePanel";
 import ServiceServicePanel from "@/components/customer/CustomerServicePanel";
 import CustomerDashboard from "@/components/customer/CustomerDashboard";
 import CustomerSettings from "@/components/customer/CustomerSettings";
-
 import Dashboard from "@/components/customer/Layout/CustomerDashboard";
 import Services from "@/components/services/Services";
 import SellerDashboard from "@/components/seller/SellerDashboard";
@@ -62,6 +61,8 @@ import ChatThread from "@/pages/ChatThread";
 import { DrawerProvider, useDrawer } from "./context/DrawerContext/DrawerContext";
 import CartSidebar from "@/components/CartSidebar";
 import WishlistDrawer from "@/components/WishlistDrawer";
+import Checkout from "@/pages/Checkout";
+import Payments from "@/pages/Payments";
 
 const queryClient = new QueryClient();
 
@@ -169,14 +170,30 @@ const AppContent = () => {
               <Route path="/chat/thread/:conversationId" element={<ProtectedRoute roles={["Customer", "Seller", "Services", "Admin"]}><ChatThread /></ProtectedRoute>} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
+              <Route
+                path="/checkout"
+                element={
+                  <ProtectedRoute roles={["Customer", "Seller", "Services", "Admin"]}>
+                    <Checkout />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/payments"
+                element={
+                  <ProtectedRoute roles={["Customer", "Seller", "Services", "Admin"]}>
+                    <Payments />
+                  </ProtectedRoute>
+                }
+              />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AuthProvider>
+        <CartSidebar isOpen={cartOpen} onClose={closeCart} />
+        <WishlistDrawer isOpen={wishlistOpen} onClose={closeWishlist} />
         </BrowserRouter>
 
         {/* ✅ GLOBAL DRAWERS - Rendered at root level */}
-        <CartSidebar isOpen={cartOpen} onClose={closeCart} />
-        <WishlistDrawer isOpen={wishlistOpen} onClose={closeWishlist} />
       </TooltipProvider>
     </>
   );

@@ -280,6 +280,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { useCart } from '@/context/CartContext/CartContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 
 interface CartItem {
   productId: string;
@@ -353,7 +354,7 @@ const CartItemCard: React.FC<{
           size="icon"
           className="w-8 h-8 text-beige hover:text-muddy-brown hover:bg-gray-200 transition-colors"
           onClick={() => onQuantityChange(item.productId, item.quantity - 1)}
-          disabled={item.quantity <= 1 || isLoading}
+          disabled={isLoading}
           aria-label={`Decrease quantity of ${item.product?.name || 'product'}`}
         >
           <Minus className="w-4 h-4" />
@@ -376,6 +377,7 @@ const CartItemCard: React.FC<{
 
 const CartSidebar: React.FC<CartSidebarProps> = ({ isOpen, onClose }) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const {
     cart,
     updateCartQuantity,
@@ -386,13 +388,17 @@ const CartSidebar: React.FC<CartSidebarProps> = ({ isOpen, onClose }) => {
   } = useCart();
 
   const handleQuantityChange = async (id: string, qty: number) => {
-    if (qty < 1) return;
     try {
-      await updateCartQuantity(id, qty);
+      if (qty < 1) {
+        await removeFromCart(id);
+        toast({ title: "Item removed", description: "Item has been removed from your cart" });
+      } else {
+        await updateCartQuantity(id, qty);
+      }
     } catch (err: any) {
       toast({
         title: "Error",
-        description: err.message || "Failed to update quantity",
+        description: err.message || "Failed to update cart",
         variant: "destructive"
       });
     }
@@ -559,6 +565,8 @@ const CartSidebar: React.FC<CartSidebarProps> = ({ isOpen, onClose }) => {
                 <Button
                   className="w-full h-12 text-base font-semibold bg-blue-600 hover:bg-blue-700 text-beige hover:text-muddy-brown transition-all duration-300 rounded-lg"
                   aria-label="Proceed to checkout"
+                  onClick={() => { onClose(); navigate('/checkout'); }}
+                  disabled={isLoading}
                 >
                   Proceed to Checkout
                 </Button>

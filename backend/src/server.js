@@ -17,6 +17,7 @@ import uploadRoutes from "./routes/upload.js";
 import profileRoutes from "./routes/profile.js";
 import chatsRoutes from "./routes/chats.js";
 import { cacheGet } from "./utils/cache.js";
+import paymentsRouter, { razorpayWebhookHandler } from "./utils/razorpay.js";
 
 // Load environment variables
 dotenv.config();
@@ -45,8 +46,31 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"] ,
+      // Allow Razorpay SDK across subdomains
+      scriptSrc: [
+        "'self'",
+        "https://checkout.razorpay.com",
+        "https://*.razorpay.com"
+      ],
+      // Some browsers use script-src-elem for external scripts
+      scriptSrcElem: [
+        "'self'",
+        "https://checkout.razorpay.com",
+        "https://*.razorpay.com"
+      ],
+      connectSrc: [
+        "'self'",
+        "https://checkout.razorpay.com",
+        "https://api.razorpay.com",
+        "https://*.razorpay.com"
+      ],
+      frameSrc: [
+        "'self'",
+        "https://api.razorpay.com",
+        "https://checkout.razorpay.com",
+        "https://*.razorpay.com"
+      ],
       imgSrc: ["'self'", "data:", "https:"],
     },
   },
@@ -75,6 +99,13 @@ app.use(
   })
 );
 
+// Razorpay webhook must use raw body for signature verification. Mount BEFORE json/urlencoded parsers.
+app.post(
+  "/api/razorpay/webhook",
+  express.raw({ type: "*/*", limit: "2mb" }),
+  razorpayWebhookHandler
+);
+
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
@@ -93,6 +124,8 @@ app.use("/api/profile", profileRoutes);
 app.use("/api", wishlistRoutes);
 app.use("/api", cacheGet(30), artisanRoutes);
 app.use("/api/chats", chatsRoutes);
+// Payments (Razorpay)
+app.use("/api", paymentsRouter);
 
 // Error handling for unmatched routes
 app.use((req, res) => {

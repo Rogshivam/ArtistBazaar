@@ -239,6 +239,13 @@ class ApiService {
     });
   }
 
+  async removeCartItem(productId: string) {
+    return this.request('/api/cart/remove', {
+      method: 'POST',
+      body: JSON.stringify({ productId }),
+    });
+  }
+
   async clearCart() {
     return this.request('/api/cart/clear', {
       method: 'POST',
@@ -384,6 +391,31 @@ class ApiService {
     return this.request(`/api/upload/image/${publicId}`, {
       method: 'DELETE',
     });
+  }
+
+  // Payments endpoints (backend server)
+  async createPaymentOrder(amountPaise: number, currency: string = 'INR') {
+    return this.request('/api/payments/create-order', {
+      method: 'POST',
+      body: JSON.stringify({ amount: amountPaise, currency }),
+    });
+  }
+
+  async verifyPayment(payload: {
+    razorpay_order_id: string;
+    razorpay_payment_id: string;
+    razorpay_signature: string;
+    total: number;
+    cartSnapshot: any[];
+  }) {
+    return this.request('/api/payments/verify', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async getPayments() {
+    return this.request('/api/payments');
   }
 }
 

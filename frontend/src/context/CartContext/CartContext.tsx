@@ -63,7 +63,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       setIsLoading(true);
       setError(null);
       const data = await apiService.getCart();
-      setCart(data.items || []);
+      setCart((data as any)?.items || []);
     } catch (error: any) {
       console.error('Failed to load cart:', error);
       setError(error.message || 'Failed to load cart');
@@ -87,7 +87,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       setIsLoading(true);
       setError(null);
       const data = await apiService.addToCart(productId, quantity);
-      setCart(data.cart.items || []);
+      setCart((data as any)?.cart?.items || []);
     } catch (error: any) {
       console.error('Failed to add to cart:', error);
       setError(error.message || 'Failed to add item to cart');
@@ -106,8 +106,10 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     try {
       setIsLoading(true);
       setError(null);
-      const data = await apiService.updateCartItem(productId, quantity);
-      setCart(data.cart.items || []);
+      const data = quantity < 1
+        ? await apiService.removeCartItem(productId)
+        : await apiService.updateCartItem(productId, quantity);
+      setCart((data as any)?.cart?.items || []);
     } catch (error: any) {
       console.error('Failed to update cart:', error);
       setError(error.message || 'Failed to update cart');
@@ -118,7 +120,23 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   };
 
   const removeFromCart = async (productId: string) => {
-    await updateCartQuantity(productId, 0);
+    const token = localStorage.getItem('auth-token');
+    if (!token) {
+      throw new Error('Please login to update cart');
+    }
+
+    try {
+      setIsLoading(true);
+      setError(null);
+      const data = await apiService.removeCartItem(productId);
+      setCart((data as any)?.cart?.items || []);
+    } catch (error: any) {
+      console.error('Failed to update cart:', error);
+      setError(error.message || 'Failed to update cart');
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const clearCart = async () => {
