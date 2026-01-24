@@ -102,6 +102,62 @@ r.post("/clear", requireAuth(), async (req, res) => {
   return res.json({ message: "Cart cleared", cart: { items: [] } });
 });
 
+// Increment quantity by 1 (or add item if absent)
+r.post("/increase", requireAuth(), async (req, res) => {
+  try {
+    const { productId } = z.object({ productId: z.string() }).parse(req.body);
+    const cart = await ensureCart(req.user.id);
+    const idx = cart.items.findIndex((i) => String(i.productId) === String(productId));
+    if (idx >= 0) {
+      cart.items[idx].quantity += 1;
+    } else {
+      const product = await Product.findById(productId);
+      if (!product) return res.status(404).json({ message: "Product not found" });
+      cart.items.push({ productId, quantity: 1, priceSnapshot: product.price });
+    }
+    await cart.save();
+    const items = await getPopulatedCartItems(req.user.id);
+    return res.json({ message: "Cart updated", cart: { items } });
+  } catch (e) {
+    return res.status(400).json({ message: e.message || "Invalid payload" });
+  }
+});
+
+// Decrement quantity by 1 (remove if reaches 0)
+r.post("/decrease", requireAuth(), async (req, res) => {
+  try {
+    const { productId } = z.object({ productId: z.string() }).parse(req.body);
+    const cart = await ensureCart(req.user.id);
+    const idx = cart.items.findIndex((i) => String(i.productId) === String(productId));
+    if (idx < 0) return res.status(404).json({ message: "Item not in cart" });
+    const nextQty = cart.items[idx].quantity - 1;
+    if (nextQty <= 0) {
+      cart.items.splice(idx, 1);
+    } else {
+      cart.items[idx].quantity = nextQty;
+    }
+    await cart.save();
+    const items = await getPopulatedCartItems(req.user.id);
+    return res.json({ message: "Cart updated", cart: { items } });
+  } catch (e) {
+    return res.status(400).json({ message: e.message || "Invalid payload" });
+  }
+});
+
+// Delete an item from cart
+r.delete("/item/:productId", requireAuth(), async (req, res) => {
+  const { productId } = req.params;
+  const cart = await ensureCart(req.user.id);
+  const before = cart.items.length;
+  cart.items = cart.items.filter((i) => String(i.productId) !== String(productId));
+  if (cart.items.length === before) {
+    return res.status(404).json({ message: "Item not in cart" });
+  }
+  await cart.save();
+  const items = await getPopulatedCartItems(req.user.id);
+  return res.json({ message: "Item removed", cart: { items } });
+});
+
 export default r;
 
 

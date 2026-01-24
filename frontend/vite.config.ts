@@ -16,7 +16,7 @@ export default defineConfig(({ mode }) => ({
       'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
       'Cross-Origin-Embedder-Policy': 'require-corp',
     },
-    host: "::",
+    host: true,
     port: 5173,
   },
   plugins: [

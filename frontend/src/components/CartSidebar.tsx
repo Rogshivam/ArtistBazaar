@@ -354,7 +354,7 @@ const CartItemCard: React.FC<{
           size="icon"
           className="w-8 h-8 text-beige hover:text-muddy-brown hover:bg-gray-200 transition-colors"
           onClick={() => onQuantityChange(item.productId, item.quantity - 1)}
-          disabled={isLoading}
+          disabled={isLoading || item.quantity <= 1}
           aria-label={`Decrease quantity of ${item.product?.name || 'product'}`}
         >
           <Minus className="w-4 h-4" />
